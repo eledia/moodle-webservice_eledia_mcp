@@ -1,0 +1,916 @@
+# =============================================================================
+# GitLab CI/CD pipeline for the webservice_elediamcp Moodle plugin.
+#
+# Company repository: git@gitlab.eledia.de:eledia_plugins/webservice/moodle-webservice_elediamcp.git
+# Target branch:      51  (Moodle 5.1)
+#
+# Repository layout (the plugin is wrapped so its frankenstyle path is preserved):
+#
+#   <repo root>/
+#   ├── .gitlab-ci.yml          <- this file, at the repo root (next to webservice/)
+#   └── webservice/
+#       └── elediamcp/          <- plugin contents
+#
+# PLUGIN_PATH is relative to the repository root (CI_PROJECT_DIR). GitLab always
+# checks out the repo root as CI_PROJECT_DIR regardless of where this file lives,
+# so the pipeline runs correctly whether .gitlab-ci.yml is at the repo root or
+# moved inside webservice/elediamcp/ (with the CI config path set accordingly).
+#
+# Moodle 5.1 serves from a public/ document root, so the plugin is mounted into
+# the cloned Moodle tree at <moodle>/public/webservice/elediamcp. The jobs detect
+# the public/ root automatically. Override any variable below under
+# Settings -> CI/CD -> Variables without editing this file.
+#
+# Stages:
+#   lint        PHPCS (Moodle standard) + PHPStan (Moodle extension)
+#   sast        Semgrep static application security testing
+#   dependency  Trivy vuln/secret/misconfig scan
+#   test        PHPUnit (with plugin-only coverage) + Behat
+#   report      Consolidated summary + PHPDepend metrics
+# =============================================================================
+
+stages:
+  - lint
+  - sast
+  - dependency
+  - test
+  - report
+
+variables:
+  # Toolchain versions (override in CI/CD settings as needed).
+  PHP_VERSION: "8.3"
+  PHPSTAN_VERSION: "80300"
+  POSTGRES_VERSION: "16"
+  SELENIUM_VERSION: "4"
+
+  # Moodle branch to test against. Company target is branch 51 = Moodle 5.1.
+  MOODLE_BRANCH: "MOODLE_501_STABLE"
+
+  # Plugin identity. PLUGIN_PATH is the plugin location relative to the repository
+  # root (no leading public/ — the repo wraps the plugin as webservice/elediamcp).
+  # PLUGIN_NAME is the frankenstyle component.
+  PLUGIN_PATH: "webservice/elediamcp"
+  PLUGIN_NAME: "webservice_elediamcp"
+
+# -----------------------------
+# PHPCS with Moodle Coding Standard
+# -----------------------------
+phpcs_moodle:
+  stage: lint
+  image: "php:${PHP_VERSION}-cli"
+  script:
+    - apt-get update && apt-get install -y git unzip curl
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+    # Allow Moodle-CS dev dependencies
+    - composer global config minimum-stability dev
+    - composer global config prefer-stable true
+    - composer global config --no-plugins allow-plugins.dealerdirect/phpcodesniffer-composer-installer true
+
+    # Install required tools
+    - composer global require squizlabs/php_codesniffer:^3 moodlehq/moodle-cs phpcompatibility/php-compatibility phpcsstandards/phpcsextra phpcsstandards/phpcsutils
+
+    # Make global vendor binaries available
+    - export PATH="$PATH:$HOME/.composer/vendor/bin"
+
+    # Configure sniff paths
+    - phpcs --config-set installed_paths "$HOME/.composer/vendor/moodlehq/moodle-cs,$HOME/.composer/vendor/phpcompatibility/php-compatibility,$HOME/.composer/vendor/phpcsstandards/phpcsextra,$HOME/.composer/vendor/phpcsstandards/phpcsutils"
+
+    # ✅ Run PHPCS while suppressing deprecation warnings (crashes)
+    - >
+      php -d error_reporting='E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED'
+      $(which phpcs)
+      --standard=Moodle
+      --report-full
+      --report-checkstyle=phpcs.xml
+      --ignore=*/vendor/*
+      "$PLUGIN_PATH" || echo "PHPCS failed" > phpcs_failed.txt
+
+  artifacts:
+    when: always
+    paths:
+      - phpcs.xml
+      - phpcs_failed.txt
+    expire_in: 1 week
+  allow_failure: true
+
+# -----------------------------
+# Semgrep SAST
+# -----------------------------
+semgrep_sast:
+  stage: sast
+  image: returntocorp/semgrep:latest
+  script:
+    - semgrep --config=auto --severity=ERROR --error --json --output=semgrep-error.json "$PLUGIN_PATH" || echo "Semgrep failed" > semgrep_failed.txt
+    - semgrep --config=auto --severity=ERROR --text "$PLUGIN_PATH" || true
+  artifacts:
+    when: always
+    paths:
+      - semgrep-error.json
+      - semgrep_failed.txt
+    expire_in: 1 week
+  allow_failure: true
+
+# -----------------------------
+# Trivy Vulnerability, Secrets & Misconfig Scan
+# -----------------------------
+trivy_scan:
+  stage: dependency
+  image: aquasec/trivy:latest
+  script:
+    - trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 --format table "$PLUGIN_PATH" || true
+    - trivy fs --scanners vuln,secret,misconfig --severity HIGH,CRITICAL --exit-code 1 --format json --output trivy-report.json "$PLUGIN_PATH" || echo "Trivy failed" > trivy_failed.txt
+  artifacts:
+    when: always
+    paths:
+      - trivy-report.json
+      - trivy_failed.txt
+    expire_in: 1 week
+  allow_failure: true
+
+# -----------------------------
+# PHPStan
+# -----------------------------
+phpstan_moodle:
+  stage: lint
+  image: "php:${PHP_VERSION}-cli"
+  script: |
+    apt-get update && apt-get install -y git unzip curl libzip-dev libpng-dev libicu-dev
+    docker-php-ext-install zip gd intl
+
+    # Composer
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+    # Set fixed Moodle version
+    export MOODLE_ROOT="/tmp/moodle"
+    export MOODLE_BRANCH="MOODLE_500_STABLE"
+
+    # Sanitize PLUGIN_PATH to remove leading 'public/' (not present in Moodle 5.0)
+    export PLUGIN_PATH_CLEANED=$(echo "$PLUGIN_PATH" | sed 's:^public/::')
+    export PLUGIN_FULLPATH="$MOODLE_ROOT/$PLUGIN_PATH_CLEANED"
+    echo "Using sanitized plugin path: $PLUGIN_PATH_CLEANED"
+
+    # Install PHPStan and Moodle extension
+    cd /builds/$CI_PROJECT_PATH
+    composer require --dev phpstan/phpstan:^2.1 micaherne/phpstan-moodle
+
+    # Clone Moodle and install dependencies
+    git clone --branch "$MOODLE_BRANCH" --depth=1 https://github.com/moodle/moodle.git "$MOODLE_ROOT"
+    cd "$MOODLE_ROOT"
+    composer install --ignore-platform-reqs
+    cp config-dist.php config.php
+    cd -
+
+    # Mount plugin into Moodle (correct location)
+    mkdir -p "$(dirname "$PLUGIN_FULLPATH")"
+    ln -s "/builds/$CI_PROJECT_PATH/$PLUGIN_PATH" "$PLUGIN_FULLPATH"
+
+    # Patch scanDirectories for correct static context
+    cat << 'EOF' > /builds/$CI_PROJECT_PATH/extension-public.neon
+    parameters:
+      scanDirectories: [ %moodle.rootDirectory% ]
+    EOF
+
+    # Main PHPStan config
+    cat << EOF > /builds/$CI_PROJECT_PATH/phpstan.neon
+    includes:
+      - /builds/$CI_PROJECT_PATH/extension-public.neon
+      - vendor/micaherne/phpstan-moodle/extension.neon
+
+    parameters:
+      moodle:
+        rootDirectory: $MOODLE_ROOT
+      paths:
+        - $PLUGIN_FULLPATH
+      excludePaths:
+        - */vendor/*
+      phpVersion: ${PHPSTAN_VERSION}
+      level: 5
+      reportUnmatchedIgnoredErrors: false
+      ignoreErrors:
+        - '#Call to an undefined method#'
+        - '#Access to an undefined property#'
+        - '#Undefined variable: \\\$DB#'
+        - '#Undefined variable: \\\$CFG#'
+    EOF
+
+    # Run PHPStan
+    php -d memory_limit=1G vendor/bin/phpstan analyse -c phpstan.neon || echo "PHPStan failed" > phpstan_failed.txt
+    php -d memory_limit=1G vendor/bin/phpstan analyse -c phpstan.neon --no-progress --error-format=json > phpstan.json || true
+
+  artifacts:
+    when: always
+    paths:
+      - phpstan.neon
+      - extension-public.neon
+      - phpstan_failed.txt
+      - phpstan.json
+    expire_in: 1 week
+  allow_failure: true
+
+# -----------------------------
+# PHPUnit Testing with Moodle
+# -----------------------------
+phpunit_moodle:
+  stage: test
+  image: "php:${PHP_VERSION}-cli"
+  services:
+    - name: "postgres:${POSTGRES_VERSION}"
+
+  variables:
+    POSTGRES_DB: "moodle"
+    POSTGRES_USER: "moodle"
+    POSTGRES_PASSWORD: "moodle"
+    DB_HOST: "postgres"
+
+  # GitLab picks the number from this log line
+  coverage: '/PHPUNIT_COVERAGE:\s+([0-9.]+)%/'
+
+  allow_failure: true
+
+  script:
+    - |
+      # ---------------------------
+      # System dependencies + locales
+      # ---------------------------
+      apt-get update
+      apt-get install -y git unzip curl locales libzip-dev libpng-dev libicu-dev libpq-dev
+
+      # Required locales for Moodle PHPUnit
+      sed -i '/en_AU.UTF-8/s/^# //g' /etc/locale.gen || echo "en_AU.UTF-8 UTF-8" >> /etc/locale.gen
+      sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen || echo "en_US.UTF-8 UTF-8" >> /etc/locale.gen
+      locale-gen
+      update-locale LANG=en_AU.UTF-8
+
+      # ---------------------------
+      # PHP extensions
+      # ---------------------------
+      docker-php-ext-install zip gd intl pgsql pdo_pgsql
+
+      pecl install xdebug
+      docker-php-ext-enable xdebug
+
+      cat > /usr/local/etc/php/conf.d/xdebug.ini <<'INI'
+      xdebug.mode=coverage
+      xdebug.start_with_request=yes
+      INI
+
+      cat > /usr/local/etc/php/conf.d/zz-moodle.ini <<'INI'
+      memory_limit=512M
+      max_input_vars=5000
+      max_execution_time=300
+      INI
+
+      # ---------------------------
+      # Composer
+      # ---------------------------
+      curl -sS https://getcomposer.org/installer \
+        | php -- --install-dir=/usr/local/bin --filename=composer
+
+      # ---------------------------
+      # Moodle core
+      # ---------------------------
+      git clone --branch "$MOODLE_BRANCH" --depth=1 https://github.com/moodle/moodle.git /tmp/moodle
+
+      cd /tmp/moodle
+      # Let Moodle's composer.lock decide phpunit version (9 on 4.x, 11 on 5.x, ...)
+      composer install --ignore-platform-reqs
+      cd -
+
+      # ---------------------------
+      # Data roots
+      # ---------------------------
+      mkdir -p /tmp/moodledata /tmp/moodledata_phpunit
+      chmod 777 /tmp/moodledata /tmp/moodledata_phpunit
+
+      # ---------------------------
+      # config.php (complete DB cfg, supports lib/ or public/lib/)
+      # ---------------------------
+      cat > /tmp/moodle/config.php <<'PHP'
+      <?php
+      unset($CFG); global $CFG; $CFG = new stdClass();
+      $CFG->dbtype    = 'pgsql';
+      $CFG->dblibrary = 'native';
+      $CFG->dbhost    = getenv('DB_HOST');
+      $CFG->dbname    = getenv('POSTGRES_DB');
+      $CFG->dbuser    = getenv('POSTGRES_USER');
+      $CFG->dbpass    = getenv('POSTGRES_PASSWORD');
+      $CFG->prefix    = 'mdl_';
+      $CFG->dboptions = ['dbpersist'=>0,'dbport'=>'','dbsocket'=>''];
+      $CFG->wwwroot   = 'http://localhost';
+      $CFG->dataroot  = '/tmp/moodledata';
+      $CFG->phpunit_prefix   = 'phpu_';
+      $CFG->phpunit_dataroot = '/tmp/moodledata_phpunit';
+      $CFG->directorypermissions = 0777;
+
+      if (file_exists(__DIR__ . '/lib/setup.php')) {
+          require_once(__DIR__ . '/lib/setup.php');
+      } elseif (file_exists(__DIR__ . '/public/lib/setup.php')) {
+          require_once(__DIR__ . '/public/lib/setup.php');
+      } else {
+          throw new RuntimeException('Unable to find Moodle lib/setup.php');
+      }
+      PHP
+
+      # ---------------------------
+      # Symlink plugin (into public/ docroot on Moodle 5.1+)
+      # ---------------------------
+      MOODLE_DOCROOT=/tmp/moodle
+      [ -d /tmp/moodle/public ] && MOODLE_DOCROOT=/tmp/moodle/public
+      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_PATH")"
+      ln -s "$CI_PROJECT_DIR/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_PATH"
+
+      # ---------------------------
+      # Install DB + init PHPUnit (root or public/admin/)
+      # ---------------------------
+      if [ -f /tmp/moodle/admin/cli/install_database.php ]; then
+        php /tmp/moodle/admin/cli/install_database.php --agree-license --adminpass=Pass123!
+      elif [ -f /tmp/moodle/public/admin/cli/install_database.php ]; then
+        php /tmp/moodle/public/admin/cli/install_database.php --agree-license --adminpass=Pass123!
+      else
+        echo "install_database.php not found" >&2
+        exit 1
+      fi
+
+      if [ -f /tmp/moodle/admin/tool/phpunit/cli/init.php ]; then
+        php /tmp/moodle/admin/tool/phpunit/cli/init.php
+      elif [ -f /tmp/moodle/public/admin/tool/phpunit/cli/init.php ]; then
+        php /tmp/moodle/public/admin/tool/phpunit/cli/init.php
+      else
+        echo "PHPUnit init script not found" >&2
+        exit 1
+      fi
+
+      # ---------------------------
+      # Run PHPUnit with coverage
+      # ---------------------------
+      cd /tmp/moodle
+
+      vendor/bin/phpunit \
+        --testsuite "${PLUGIN_NAME}_testsuite" \
+        --coverage-text=/tmp/moodle/coverage.txt \
+        --coverage-clover=/tmp/moodle/coverage.xml \
+        --log-junit=/tmp/moodle/junit.xml \
+        --testdox || true
+
+      cd "$CI_PROJECT_DIR"
+
+      # Copy reports into project dir
+      cp /tmp/moodle/junit.xml    "$CI_PROJECT_DIR/junit.xml" || true
+      cp /tmp/moodle/coverage.xml "$CI_PROJECT_DIR/coverage.xml" || true
+      cp /tmp/moodle/coverage.txt "$CI_PROJECT_DIR/coverage.txt" || true
+
+      # ---------------------------
+      # Plugin-only coverage from coverage.xml via inline parser
+      # ---------------------------
+
+      cat > plugin_coverage.php <<'PHP'
+      <?php
+      /**
+       * Plugin-only coverage parser for PHPUnit Clover XML.
+       *
+       * Usage inside CI:
+       *   php plugin_coverage.php coverage.xml "$PLUGIN_NAME" "$PLUGIN_PATH"
+       */
+      if ($argc < 3) {
+          fwrite(STDERR, "Usage: php {$argv[0]} coverage.xml PLUGIN_NAMESPACE [PLUGIN_PATH]\n");
+          exit(1);
+      }
+
+      $xmlFile         = $argv[1];
+      $pluginNamespace = rtrim($argv[2], '\\'); // e.g. "auth_eledia_support"
+      $pluginPath      = $argv[3] ?? null;      // e.g. "public/auth/eledia_support"
+
+      if (!file_exists($xmlFile)) {
+          fwrite(STDERR, "coverage.xml not found: {$xmlFile}\n");
+          echo "PHPUNIT_COVERAGE: 0.00%\n";
+          exit(0);
+      }
+
+      $xml = simplexml_load_file($xmlFile);
+      if ($xml === false || !isset($xml->project)) {
+          fwrite(STDERR, "Invalid coverage.xml (no <project> node).\n");
+          echo "PHPUNIT_COVERAGE: 0.00%\n";
+          exit(0);
+      }
+
+      // Structure: <coverage><project><package><file><class>...
+      $files = $xml->project->xpath('.//file');
+      if (!$files) {
+          fwrite(STDERR, "No <file> nodes found under <project>.\n");
+          echo "PHPUNIT_COVERAGE: 0.00%\n";
+          exit(0);
+      }
+
+      $prefixNoSlash  = $pluginNamespace . '\\';
+      $prefixWithLead = '\\' . $pluginNamespace . '\\';
+
+      $totalStatements = 0;
+      $totalCovered    = 0;
+      $rows            = [];
+
+      foreach ($files as $file) {
+          $fileName = (string)$file['name'];
+
+          // Optional plugin-path filter (e.g. "public/auth/eledia_support")
+          if ($pluginPath && strpos($fileName, '/' . $pluginPath . '/') === false) {
+              continue;
+          }
+
+          foreach ($file->class as $class) {
+              $className = (string)$class['name'];
+
+              $isInNamespace =
+                  strpos($className, $prefixNoSlash) === 0 ||
+                  strpos($className, $prefixWithLead) === 0 ||
+                  $className === $pluginNamespace;
+
+              if (!$isInNamespace) {
+                  continue;
+              }
+
+              $metrics = $class->metrics;
+              if (!$metrics) {
+                  continue;
+              }
+
+              $stmts       = isset($metrics['statements'])        ? (int)$metrics['statements']        : 0;
+              $coveredStmt = isset($metrics['coveredstatements']) ? (int)$metrics['coveredstatements'] : 0;
+              $methods     = isset($metrics['methods'])           ? (int)$metrics['methods']           : 0;
+              $coveredMeth = isset($metrics['coveredmethods'])    ? (int)$metrics['coveredmethods']    : 0;
+
+              $totalStatements += $stmts;
+              $totalCovered    += $coveredStmt;
+
+              $linePct   = $stmts   > 0 ? ($coveredStmt * 100.0 / $stmts)   : 0.0;
+              $methodPct = $methods > 0 ? ($coveredMeth * 100.0 / $methods) : 0.0;
+
+              $rows[] = [
+                  'class'       => $className,
+                  'methods'     => $methods,
+                  'coveredMeth' => $coveredMeth,
+                  'stmts'       => $stmts,
+                  'coveredStmt' => $coveredStmt,
+                  'linePct'     => $linePct,
+                  'methodPct'   => $methodPct,
+              ];
+          }
+      }
+
+      echo "======================================================\n";
+      echo "PLUGIN COVERAGE (classes in namespace: {$pluginNamespace})\n";
+      echo "======================================================\n";
+
+      if (empty($rows)) {
+          echo "No plugin classes found in coverage.xml\n";
+          echo "PHPUNIT_COVERAGE: 0.00%\n";
+          file_put_contents(__DIR__ . '/coverage_percent.txt', "0.00\n");
+          exit(0);
+      }
+
+      foreach ($rows as $row) {
+          printf(
+              "%s\n  Methods: %7.2f%% (%3d/%3d)   Lines: %7.2f%% (%4d/%4d)\n",
+              $row['class'],
+              $row['methodPct'],
+              $row['coveredMeth'],
+              $row['methods'],
+              $row['linePct'],
+              $row['coveredStmt'],
+              $row['stmts']
+          );
+      }
+
+      echo "------------------------------------------------------\n";
+
+      if ($totalStatements > 0) {
+          $overallPct = $totalCovered * 100.0 / $totalStatements;
+      } else {
+          $overallPct = 0.0;
+      }
+
+      $overallStr = sprintf('%.2f', $overallPct);
+      printf("OVERALL PLUGIN LINE COVERAGE: %s%%\n", $overallStr);
+      printf("PHPUNIT_COVERAGE: %s%%\n", $overallStr);
+      file_put_contents(__DIR__ . '/coverage_percent.txt', $overallStr . "\n");
+      PHP
+
+      echo ""
+      echo "PLUGIN COVERAGE AGGREGATE (via plugin_coverage.php):"
+      php plugin_coverage.php coverage.xml "$PLUGIN_NAME" "$PLUGIN_PATH" | tee plugin_coverage_output.txt
+
+  artifacts:
+    when: always
+    paths:
+      - junit.xml
+      - coverage.xml
+      - coverage.txt
+      - coverage_percent.txt
+      - plugin_coverage_output.txt
+    expire_in: 1 week
+
+# -----------------------------
+# Behat Acceptance Testing
+# -----------------------------
+behat_moodle:
+  stage: test
+  image: php:${PHP_VERSION}-cli
+  services:
+    - name: postgres:${POSTGRES_VERSION}
+    - name: selenium/standalone-firefox:${SELENIUM_VERSION}
+  variables:
+    POSTGRES_DB: moodle
+    POSTGRES_USER: moodle
+    POSTGRES_PASSWORD: moodle
+    DB_HOST: postgres
+  script:
+    # PHP extensions
+    - apt-get update && apt-get install -y git unzip curl libzip-dev libpng-dev libicu-dev libpq-dev locales
+    - docker-php-ext-install zip gd intl pgsql pdo_pgsql
+
+    # PHP config
+    - |
+      cat > /usr/local/etc/php/conf.d/zz-moodle.ini <<'INI'
+      max_input_vars = 5000
+      memory_limit = 512M
+      max_execution_time = 300
+      INI
+
+    # Composer
+    - curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+
+    # Moodle code
+    - git clone --branch $MOODLE_BRANCH --depth=1 https://github.com/moodle/moodle.git /tmp/moodle
+    - cd /tmp/moodle && composer install --no-dev --ignore-platform-reqs && composer require --dev behat/mink behat/behat && cd -
+
+    # Data roots
+    - mkdir -p /tmp/moodledata /tmp/moodledata_behat
+    - chmod 777 /tmp/moodledata /tmp/moodledata_behat
+
+    # Locales
+    - sed -i '/en_AU.UTF-8/s/^# //g' /etc/locale.gen
+    - sed -i '/en_US.UTF-8/s/^# //g' /etc/locale.gen
+    - locale-gen
+    - update-locale LANG=en_AU.UTF-8
+
+    # config.php (supports lib/ or public/lib/)
+    - |
+      cat > /tmp/moodle/config.php <<PHP
+      <?php
+      unset(\$CFG); global \$CFG; \$CFG = new stdClass();
+      \$CFG->dbtype = 'pgsql';
+      \$CFG->dblibrary = 'native';
+      \$CFG->dbhost = getenv('DB_HOST');
+      \$CFG->dbname = getenv('POSTGRES_DB');
+      \$CFG->dbuser = getenv('POSTGRES_USER');
+      \$CFG->dbpass = getenv('POSTGRES_PASSWORD');
+      \$CFG->prefix = 'mdl_';
+      \$CFG->wwwroot = 'http://localhost';
+      \$CFG->dataroot = '/tmp/moodledata';
+      \$CFG->behat_wwwroot = 'http://localhost:8000';
+      \$CFG->behat_dataroot = '/tmp/moodledata_behat';
+      \$CFG->behat_prefix = 'bht_';
+      \$CFG->behat_dbname = 'behat_moodle';
+      \$CFG->directorypermissions = 0777;
+
+      if (file_exists(__DIR__.'/lib/setup.php')) {
+          require_once(__DIR__.'/lib/setup.php');
+      } elseif (file_exists(__DIR__.'/public/lib/setup.php')) {
+          require_once(__DIR__.'/public/lib/setup.php');
+      } else {
+          throw new RuntimeException('Unable to find Moodle lib/setup.php');
+      }
+      PHP
+
+    # Plugin symlink (into public/ docroot on Moodle 5.1+)
+    - |
+      MOODLE_DOCROOT=/tmp/moodle
+      [ -d /tmp/moodle/public ] && MOODLE_DOCROOT=/tmp/moodle/public
+      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_PATH")"
+      ln -s "/builds/$CI_PROJECT_PATH/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_PATH"
+
+    # Ensure Behat DB exists
+    - apt-get install -y postgresql-client
+    - PGPASSWORD=$POSTGRES_PASSWORD psql -h $DB_HOST -U $POSTGRES_USER -c "CREATE DATABASE behat_moodle;" || true
+
+    # Init Behat (root or public/admin/)
+    - |
+      if [ -f /tmp/moodle/admin/tool/behat/cli/init.php ]; then
+        php /tmp/moodle/admin/tool/behat/cli/init.php || echo "Behat init failed" > behat_notice.txt
+      elif [ -f /tmp/moodle/public/admin/tool/behat/cli/init.php ]; then
+        php /tmp/moodle/public/admin/tool/behat/cli/init.php || echo "Behat init failed" > behat_notice.txt
+      else
+        echo "Behat init script not found" > behat_notice.txt
+      fi
+
+    # Start web server (use /public if present for 5.1+)
+    - |
+      DOCROOT=/tmp/moodle
+      if [ -d /tmp/moodle/public ]; then
+        DOCROOT=/tmp/moodle/public
+      fi
+      php -S 0.0.0.0:8000 -t "$DOCROOT" >/tmp/moodle/behat_webserver.log 2>&1 &
+      sleep 5
+
+    # Run tests
+    - cd /tmp/moodle
+    - |
+      # Plugin path relative to the cwd (/tmp/moodle); under public/ on 5.1+.
+      if [ -d /tmp/moodle/public ]; then PLUGIN_REL="public/$PLUGIN_PATH"; else PLUGIN_REL="$PLUGIN_PATH"; fi
+
+      if [ -d "$PLUGIN_REL/tests/behat" ]; then
+        EXCLUDE_TAGS=$(grep -rhoE '@[A-Za-z0-9_]+' "$PLUGIN_REL/tests/behat" | { grep '_wp$' || true; } | sort -u | tr '\n' ' ')
+      else
+        EXCLUDE_TAGS=""
+      fi
+
+      echo "Detected _wp tags: ${EXCLUDE_TAGS:-<none>}"
+
+      TAG_EXPR=""
+      for t in $EXCLUDE_TAGS; do
+        if [ -z "$TAG_EXPR" ]; then TAG_EXPR="~$t"; else TAG_EXPR="$TAG_EXPR&&~$t"; fi
+      done
+
+      if [ -n "$TAG_EXPR" ]; then
+        vendor/bin/behat \
+          --config /tmp/moodledata_behat/behatrun/behat/behat.yml \
+          --format pretty --out std \
+          --format junit --out /builds/$CI_PROJECT_PATH/behat-junit.xml \
+          --tags "$TAG_EXPR" \
+          "$PLUGIN_REL/tests/behat" || true
+      else
+        vendor/bin/behat \
+          --config /tmp/moodledata_behat/behatrun/behat/behat.yml \
+          --format pretty --out std \
+          --format junit --out /builds/$CI_PROJECT_PATH/behat-junit.xml \
+          "$PLUGIN_REL/tests/behat" || true
+      fi
+
+      : >> /builds/$CI_PROJECT_PATH/behat_notice.txt
+
+  artifacts:
+    when: always
+    paths:
+      - behat-junit.xml
+      - behat_notice.txt
+    expire_in: 1 week
+  allow_failure: true
+
+# -------------------
+# Summary Report Stage
+# -------------------
+summary:
+  stage: report
+  image: alpine:3.19
+  needs:
+    - phpcs_moodle
+    - phpstan_moodle
+    - semgrep_sast
+    - trivy_scan
+    - phpunit_moodle
+    - behat_moodle
+  script:
+    - apk add --no-cache jq coreutils grep sed libxml2-utils perl
+    - |
+      # Initialise fail flags (all in one block so they persist).
+      PHPCS_FAIL=0
+      PHPSTAN_WARN=0
+      SEMGREP_FAIL=0
+      TRIVY_FAIL=0
+      PHPUNIT_FAIL=0
+      BEHAT_FAIL=0
+
+      echo "==================================================" > summary.md
+      echo "   📝 CI Security, Linting & Test Summary" >> summary.md
+      echo "==================================================" >> summary.md
+      echo "" >> summary.md
+      printf "%-10s | %-8s | %-25s | %-15s\n" "Tool" "Status" "Findings" "Report" >> summary.md
+      printf "%-10s-+-%-8s-+-%-25s-+-%-15s\n" "----------" "--------" "-------------------------" "---------------" >> summary.md
+
+      # ---- PHPCS ----
+      if [ -f phpcs.xml ]; then
+        PHPCS_ERRORS=$(grep -c 'severity="error"' phpcs.xml) || true
+        PHPCS_ERRORS=${PHPCS_ERRORS:-0}
+        PHPCS_WARNINGS=$(grep -c 'severity="warning"' phpcs.xml) || true
+        PHPCS_WARNINGS=${PHPCS_WARNINGS:-0}
+        if [ "$PHPCS_ERRORS" -gt 0 ] 2>/dev/null; then PHPCS_FAIL=1; fi
+        printf "%-10s | %-8s | %s errors, %s warnings | %s\n" \
+          "PHPCS" "$( [ $PHPCS_FAIL -eq 0 ] && echo '✅ OK' || echo '❌ FAIL')" "$PHPCS_ERRORS" "$PHPCS_WARNINGS" "phpcs.xml" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 PHPCS (first 10 issues)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        grep -o '<error line="[0-9]*" column="[0-9]*" severity="[^"]*" message="[^"]*"' phpcs.xml \
+          | sed -E 's/<error line="([0-9]+)".*severity="([^"]+)".*message="([^"]+)".*/[Line \1] \2: \3/' \
+          | head -n 10 >> summary.md || echo "No issues" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "PHPCS" "✅ OK" "0" "-" >> summary.md
+      fi
+
+      # ---- PHPStan ----
+      if [ -f phpstan.json ]; then
+        PHPSTAN_ERRORS=$(jq '.totals.file_errors // 0' phpstan.json 2>/dev/null) || true
+        PHPSTAN_ERRORS=${PHPSTAN_ERRORS:-0}
+        if [ "$PHPSTAN_ERRORS" -gt 0 ] 2>/dev/null; then PHPSTAN_WARN=1; fi
+        printf "%-10s | %-8s | %s errors (advisory) | %s\n" \
+          "PHPStan" "$( [ $PHPSTAN_WARN -eq 0 ] && echo 'ℹ️ OK' || echo '⚠️ WARN')" "$PHPSTAN_ERRORS" "phpstan.json" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 PHPStan (first 10 issues)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        jq -r '.files | to_entries[] | .key as $file | .value.messages[] | "[" + $file + ":" + (.line|tostring) + "] " + .message' phpstan.json \
+          | head -n 10 >> summary.md || echo "No messages" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "PHPStan" "ℹ️ OK" "0" "-" >> summary.md
+      fi
+
+      # ---- Semgrep ----
+      if [ -f semgrep-error.json ]; then
+        SEMGREP_FINDINGS=$(jq '.results | length // 0' semgrep-error.json 2>/dev/null) || true
+        SEMGREP_FINDINGS=${SEMGREP_FINDINGS:-0}
+        if [ "$SEMGREP_FINDINGS" -gt 0 ] 2>/dev/null; then SEMGREP_FAIL=1; fi
+        printf "%-10s | %-8s | %s findings | %s\n" \
+          "Semgrep" "$( [ $SEMGREP_FAIL -eq 0 ] && echo '✅ OK' || echo '❌ FAIL')" "$SEMGREP_FINDINGS" "semgrep-error.json" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 Semgrep (first 10 findings)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        jq -r '.results[] | "[\(.path):\(.start.line)] \(.extra.message) (\(.check_id))"' semgrep-error.json \
+          | head -n 10 >> summary.md || echo "No findings" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "Semgrep" "✅ OK" "0" "-" >> summary.md
+      fi
+
+      # ---- Trivy ----
+      if [ -f trivy-report.json ]; then
+        TRIVY_TOTAL=$(jq '[.Results[]?.Vulnerabilities? // [] | length] | add // 0' trivy-report.json 2>/dev/null) || true
+        TRIVY_TOTAL=${TRIVY_TOTAL:-0}
+        if [ "$TRIVY_TOTAL" -gt 0 ] 2>/dev/null; then TRIVY_FAIL=1; fi
+        printf "%-10s | %-8s | %s vulns | %s\n" \
+          "Trivy" "$( [ $TRIVY_FAIL -eq 0 ] && echo '✅ OK' || echo '❌ FAIL')" "$TRIVY_TOTAL" "trivy-report.json" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 Trivy (first 10 vulnerabilities)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        jq -r '.Results[]?.Vulnerabilities[]? | "[\(.Severity)] \(.VulnerabilityID) - \(.PkgName) \(.InstalledVersion)"' trivy-report.json \
+          | head -n 10 >> summary.md || echo "No vulnerabilities" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "Trivy" "✅ OK" "0" "-" >> summary.md
+      fi
+
+      # ---- PHPUnit ----
+      if [ -f junit.xml ]; then
+        PHPUNIT_TESTS=$(xmllint --xpath 'string(count(//testsuite/testcase))' junit.xml 2>/dev/null) || true
+        PHPUNIT_TESTS=${PHPUNIT_TESTS:-0}
+        PHPUNIT_FAILURES=$(xmllint --xpath 'string(sum(//testsuite/@failures))' junit.xml 2>/dev/null) || true
+        PHPUNIT_FAILURES=${PHPUNIT_FAILURES:-0}
+        PHPUNIT_ERRORS=$(xmllint --xpath 'string(sum(//testsuite/@errors))' junit.xml 2>/dev/null) || true
+        PHPUNIT_ERRORS=${PHPUNIT_ERRORS:-0}
+
+        # Only fail on actual failures or errors, not on zero test count.
+        if [ "$PHPUNIT_FAILURES" != "0" ] || [ "$PHPUNIT_ERRORS" != "0" ]; then
+          PHPUNIT_FAIL=1
+        fi
+
+        printf "%-10s | %-8s | %s tests, %s failures, %s errors | %s\n" \
+          "PHPUnit" "$( [ $PHPUNIT_FAIL -eq 0 ] && echo '✅ OK' || echo '❌ FAIL')" "$PHPUNIT_TESTS" "$PHPUNIT_FAILURES" "$PHPUNIT_ERRORS" "junit.xml" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 PHPUnit (first 10 tests)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        xmllint --xpath '//testcase/@name' junit.xml 2>/dev/null \
+          | sed -E 's/ name="/\n/g' | sed -E 's/"//g' | head -n 10 >> summary.md || echo "No tests" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "PHPUnit" "✅ OK" "0 tests" "-" >> summary.md
+      fi
+
+      # ---- Behat ----
+      # Behat JUnit output may use default.xml or another name; find any XML.
+      BEHAT_XML=""
+      if [ -d behat-junit.xml ]; then
+        BEHAT_XML=$(find behat-junit.xml -name '*.xml' -type f | head -n 1)
+      fi
+      if [ -n "$BEHAT_XML" ]; then
+        BEHAT_TESTS=$(xmllint --xpath 'string(//testsuite/@tests)' "$BEHAT_XML" 2>/dev/null) || true
+        BEHAT_TESTS=${BEHAT_TESTS:-0}
+        BEHAT_FAILURES=$(xmllint --xpath 'string(//testsuite/@failures)' "$BEHAT_XML" 2>/dev/null) || true
+        BEHAT_FAILURES=${BEHAT_FAILURES:-0}
+        BEHAT_ERRORS=$(xmllint --xpath 'string(//testsuite/@errors)' "$BEHAT_XML" 2>/dev/null) || true
+        BEHAT_ERRORS=${BEHAT_ERRORS:-0}
+        BEHAT_SKIPPED=$(xmllint --xpath 'string(//testsuite/@skipped)' "$BEHAT_XML" 2>/dev/null) || true
+        BEHAT_SKIPPED=${BEHAT_SKIPPED:-0}
+
+        # Only fail on actual failures or errors, not on zero test count.
+        if [ "$BEHAT_FAILURES" != "0" ] || [ "$BEHAT_ERRORS" != "0" ]; then
+          BEHAT_FAIL=1
+        fi
+
+        printf "%-10s | %-8s | %s tests, %s failures, %s errors, %s skipped | %s\n" \
+          "Behat" "$( [ $BEHAT_FAIL -eq 0 ] && echo '✅ OK' || echo '❌ FAIL')" \
+          "$BEHAT_TESTS" "$BEHAT_FAILURES" "$BEHAT_ERRORS" "$BEHAT_SKIPPED" "$BEHAT_XML" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        echo "   🔎 Behat (first 10 scenarios)" >> summary.md
+        echo "--------------------------------------------------" >> summary.md
+        xmllint --xpath '//testcase' "$BEHAT_XML" 2>/dev/null \
+          | grep -o 'name="[^"]*"' \
+          | sed -E 's/name="(.*)"/\1/' \
+          | head -n 10 >> summary.md || echo "No scenarios" >> summary.md
+        echo "" >> summary.md
+      else
+        printf "%-10s | %-8s | %-25s | %-15s\n" "Behat" "✅ OK" "0 tests" "-" >> summary.md
+      fi
+
+      # ---- Final Verdict ----
+      echo "==================================================" >> summary.md
+      if [ "$PHPCS_FAIL" -ne 0 ] || [ "$SEMGREP_FAIL" -ne 0 ] || [ "$TRIVY_FAIL" -ne 0 ] || [ "$PHPUNIT_FAIL" -ne 0 ] || [ "$BEHAT_FAIL" -ne 0 ]; then
+        echo "❌ One or more critical scanners (PHPCS, Semgrep, Trivy, PHPUnit, Behat) reported issues." >> summary.md
+        if [ "$PHPSTAN_WARN" -ne 0 ]; then
+          echo "⚠️ PHPStan findings are advisory only." >> summary.md
+        fi
+        cat summary.md
+        exit 1
+      else
+        if [ "$PHPSTAN_WARN" -ne 0 ]; then
+          echo "⚠️ PHPStan findings are advisory only." >> summary.md
+        fi
+        echo "✅ All critical scanners passed." >> summary.md
+        cat summary.md
+      fi
+
+  artifacts:
+    when: always
+    paths:
+      - summary.md
+      - phpcs.xml
+      - phpstan.json
+      - semgrep-error.json
+      - trivy-report.json
+      - junit.xml
+      - behat-junit.xml/
+    expire_in: 1 week
+
+# -----------------------------
+# PHPDepend – Code Quality Metrics
+# -----------------------------
+phpdepend_metrics:
+  stage: report
+  image: "php:${PHP_VERSION}-cli"
+  script: |
+    apt-get update && apt-get install -y git unzip curl graphviz
+    curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+    composer global require pdepend/pdepend:^2.15
+    export COMPOSER_BIN=$(composer global config bin-dir --absolute)
+    export PATH="$PATH:$COMPOSER_BIN"
+    echo "Composer bin directory: $COMPOSER_BIN"
+    ls -la "$COMPOSER_BIN"
+
+    mkdir -p pdepend-report
+
+    if [ ! -d "$PLUGIN_PATH" ]; then
+      echo "ERROR: PLUGIN_PATH '$PLUGIN_PATH' not found!"
+      exit 1
+    fi
+
+    # Run PDepend with vendor excluded
+    pdepend \
+      --summary-xml=pdepend-report/summary.xml \
+      --jdepend-xml=pdepend-report/jdepend.xml \
+      --jdepend-chart=pdepend-report/jdepend.svg \
+      --overview-pyramid=pdepend-report/pyramid.svg \
+      --ignore="$PLUGIN_PATH/vendor" \
+      "$PLUGIN_PATH"
+
+    # Output version
+    echo ""
+    echo "========== 📦 PDEPEND VERSION =========="
+    pdepend --version || echo "Version unavailable"
+    echo "======================================="
+
+    # Parse metrics, skipping placeholder value
+    echo ""
+    echo "========== 📊 PDEPEND METRIC SUMMARY =========="
+    awk '
+      /<metrics / {
+        for (i = 1; i <= NF; i++) {
+          if ($i ~ /=/) {
+            gsub(/"/, "", $i)
+            gsub(/>/, "", $i)
+            split($i, a, "=")
+            if (a[2] != "@package_version@")
+              printf "%-20s : %s\n", a[1], a[2]
+          }
+        }
+      }
+    ' pdepend-report/summary.xml | sort
+    echo "==============================================="
+
+    echo ""
+    echo "📘 Learn about these metrics: https://pdepend.org/documentation/software-metrics/index.html"
+
+  artifacts:
+    when: always
+    paths:
+      - pdepend-report/
+    expire_in: 1 week
+
+  allow_failure: true

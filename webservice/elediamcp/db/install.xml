@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="webservice/elediamcp/db" VERSION="20260609" COMMENT="MCP web service plugin database schema."
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="webservice_elediamcp_token" COMMENT="Lifecycle and audit metadata for MCP web service tokens. Authentication is delegated to the core external_tokens row referenced by externaltokenid; this table tracks the MCP-specific scope, label, expiry and revocation state, and survives deletion of the core token so a revoked token stays auditable.">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="externaltokenid" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Reference to the backing external_tokens.id while the token is live; nulled when the core token is deleted on revocation."/>
+        <FIELD NAME="tokenhash" TYPE="char" LENGTH="64" NOTNULL="true" SEQUENCE="false" COMMENT="SHA-256 hex digest of the token value, used to correlate without persisting the secret."/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Owner of the token (the Moodle user the token authenticates as)."/>
+        <FIELD NAME="externalserviceid" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="The MCP external service the token is scoped to."/>
+        <FIELD NAME="name" TYPE="char" LENGTH="255" NOTNULL="true" SEQUENCE="false" COMMENT="Human-readable token label."/>
+        <FIELD NAME="creatorid" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="User who created the token (the authenticated user for UI-created tokens, or the user on whose behalf a first-party plugin acted)."/>
+        <FIELD NAME="component" TYPE="char" LENGTH="100" NOTNULL="false" SEQUENCE="false" COMMENT="Frankenstyle component of the first-party plugin that provisioned the token via the internal API, or null for self-service tokens."/>
+        <FIELD NAME="validuntil" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Expiry timestamp mirrored from the core token, retained for display after revocation. 0 or null means no expiry."/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="false" COMMENT="Creation timestamp."/>
+        <FIELD NAME="lastaccess" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Snapshot of the last-used timestamp, taken at revocation so it survives deletion of the core token."/>
+        <FIELD NAME="revoked" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0" SEQUENCE="false" COMMENT="1 when the token has been revoked, 0 otherwise."/>
+        <FIELD NAME="timerevoked" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="Revocation timestamp."/>
+        <FIELD NAME="revokedby" TYPE="int" LENGTH="10" NOTNULL="false" SEQUENCE="false" COMMENT="User who revoked the token, or null when revoked programmatically."/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+        <KEY NAME="userid" TYPE="foreign" FIELDS="userid" REFTABLE="user" REFFIELDS="id"/>
+        <KEY NAME="externalserviceid" TYPE="foreign" FIELDS="externalserviceid" REFTABLE="external_services" REFFIELDS="id"/>
+        <KEY NAME="creatorid" TYPE="foreign" FIELDS="creatorid" REFTABLE="user" REFFIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="tokenhash" UNIQUE="false" FIELDS="tokenhash" COMMENT="Used to correlate a presented token value with its metadata row."/>
+        <INDEX NAME="externaltokenid" UNIQUE="false" FIELDS="externaltokenid"/>
+        <INDEX NAME="userid-revoked" UNIQUE="false" FIELDS="userid,revoked" COMMENT="Used to list a user's active or revoked tokens."/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>
