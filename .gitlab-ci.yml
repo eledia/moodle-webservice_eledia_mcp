@@ -4,22 +4,25 @@
 # Company repository: git@gitlab.eledia.de:eledia_plugins/webservice/moodle-webservice_elediamcp.git
 # Target branch:      51  (Moodle 5.1)
 #
-# Repository layout (the plugin is wrapped so its frankenstyle path is preserved):
+# Repository layout (the plugin is wrapped under public/ so the repo mirrors a
+# Moodle 5.x document root and can be overlaid onto a checkout directly):
 #
 #   <repo root>/
-#   ├── .gitlab-ci.yml          <- this file, at the repo root (next to webservice/)
-#   └── webservice/
-#       └── elediamcp/          <- plugin contents
+#   ├── .gitlab-ci.yml              <- this file, at the repo root
+#   └── public/
+#       └── webservice/
+#           └── elediamcp/          <- plugin contents
 #
-# PLUGIN_PATH is relative to the repository root (CI_PROJECT_DIR). GitLab always
-# checks out the repo root as CI_PROJECT_DIR regardless of where this file lives,
-# so the pipeline runs correctly whether .gitlab-ci.yml is at the repo root or
-# moved inside webservice/elediamcp/ (with the CI config path set accordingly).
-#
-# Moodle 5.1 serves from a public/ document root, so the plugin is mounted into
-# the cloned Moodle tree at <moodle>/public/webservice/elediamcp. The jobs detect
-# the public/ root automatically. Override any variable below under
-# Settings -> CI/CD -> Variables without editing this file.
+# PLUGIN_PATH is the plugin location relative to the repository root
+# (CI_PROJECT_DIR), including the leading public/. The jobs that mount the plugin
+# into a cloned Moodle tree strip the leading public/ to derive the frankenstyle
+# component path (webservice/elediamcp) and mount it under the Moodle document
+# root -- which is <moodle>/public on 5.1+, or <moodle> on 4.x/5.0 -- so the
+# pipeline is correct on every supported branch. GitLab always checks out the
+# repo root as CI_PROJECT_DIR regardless of where this file lives, so the
+# pipeline runs whether .gitlab-ci.yml sits at the repo root or inside the plugin
+# folder (with the CI config path set accordingly). Override any variable below
+# under Settings -> CI/CD -> Variables without editing this file.
 #
 # Stages:
 #   lint        PHPCS (Moodle standard) + PHPStan (Moodle extension)
@@ -47,9 +50,9 @@ variables:
   MOODLE_BRANCH: "MOODLE_501_STABLE"
 
   # Plugin identity. PLUGIN_PATH is the plugin location relative to the repository
-  # root (no leading public/ — the repo wraps the plugin as webservice/elediamcp).
-  # PLUGIN_NAME is the frankenstyle component.
-  PLUGIN_PATH: "webservice/elediamcp"
+  # root, including the leading public/ (the repo wraps the plugin as
+  # public/webservice/elediamcp). PLUGIN_NAME is the frankenstyle component.
+  PLUGIN_PATH: "public/webservice/elediamcp"
   PLUGIN_NAME: "webservice_elediamcp"
 
 # -----------------------------
@@ -313,12 +316,15 @@ phpunit_moodle:
       PHP
 
       # ---------------------------
-      # Symlink plugin (into public/ docroot on Moodle 5.1+)
+      # Symlink plugin into the Moodle document root.
+      # The repo wraps the plugin under public/; strip it to get the frankenstyle
+      # component path, then mount under <moodle>/public (5.1+) or <moodle> (4.x/5.0).
       # ---------------------------
+      PLUGIN_COMPONENT_PATH="${PLUGIN_PATH#public/}"
       MOODLE_DOCROOT=/tmp/moodle
       [ -d /tmp/moodle/public ] && MOODLE_DOCROOT=/tmp/moodle/public
-      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_PATH")"
-      ln -s "$CI_PROJECT_DIR/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_PATH"
+      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_COMPONENT_PATH")"
+      ln -s "$CI_PROJECT_DIR/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_COMPONENT_PATH"
 
       # ---------------------------
       # Install DB + init PHPUnit (root or public/admin/)
@@ -584,10 +590,11 @@ behat_moodle:
 
     # Plugin symlink (into public/ docroot on Moodle 5.1+)
     - |
+      PLUGIN_COMPONENT_PATH="${PLUGIN_PATH#public/}"
       MOODLE_DOCROOT=/tmp/moodle
       [ -d /tmp/moodle/public ] && MOODLE_DOCROOT=/tmp/moodle/public
-      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_PATH")"
-      ln -s "/builds/$CI_PROJECT_PATH/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_PATH"
+      mkdir -p "$MOODLE_DOCROOT/$(dirname "$PLUGIN_COMPONENT_PATH")"
+      ln -s "/builds/$CI_PROJECT_PATH/$PLUGIN_PATH" "$MOODLE_DOCROOT/$PLUGIN_COMPONENT_PATH"
 
     # Ensure Behat DB exists
     - apt-get install -y postgresql-client
@@ -616,7 +623,8 @@ behat_moodle:
     - cd /tmp/moodle
     - |
       # Plugin path relative to the cwd (/tmp/moodle); under public/ on 5.1+.
-      if [ -d /tmp/moodle/public ]; then PLUGIN_REL="public/$PLUGIN_PATH"; else PLUGIN_REL="$PLUGIN_PATH"; fi
+      PLUGIN_COMPONENT_PATH="${PLUGIN_PATH#public/}"
+      if [ -d /tmp/moodle/public ]; then PLUGIN_REL="public/$PLUGIN_COMPONENT_PATH"; else PLUGIN_REL="$PLUGIN_COMPONENT_PATH"; fi
 
       if [ -d "$PLUGIN_REL/tests/behat" ]; then
         EXCLUDE_TAGS=$(grep -rhoE '@[A-Za-z0-9_]+' "$PLUGIN_REL/tests/behat" | { grep '_wp$' || true; } | sort -u | tr '\n' ' ')
