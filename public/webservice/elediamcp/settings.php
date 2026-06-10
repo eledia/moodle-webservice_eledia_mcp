@@ -49,6 +49,15 @@ if ($hassiteconfig) {
         $mcpservices
     ));
 
+    // Token management: how long to keep revoked token audit records.
+    $settings->add(new admin_setting_configtext(
+        'webservice_elediamcp/token_retention_days',
+        get_string('setting_token_retention_days', 'webservice_elediamcp'),
+        get_string('setting_token_retention_days_desc', 'webservice_elediamcp'),
+        30,
+        PARAM_INT
+    ));
+
     // Security: allowed CORS / Origin allow-list.
     $settings->add(new admin_setting_configtextarea(
         'webservice_elediamcp/allowed_origins',

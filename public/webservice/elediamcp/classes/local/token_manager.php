@@ -293,6 +293,38 @@ class token_manager {
     }
 
     /**
+     * Delete the audit records of long-revoked tokens.
+     *
+     * Connector-provisioned tokens are re-minted regularly (each mint revokes the
+     * previous one), so revoked metadata rows accumulate. This prunes rows that
+     * have been revoked for longer than the retention window. Only metadata is
+     * removed; the backing core token was already deleted at revocation, and
+     * active tokens are never touched.
+     *
+     * @param int $retentiondays Days to keep a revoked record. 0 (or less) disables pruning.
+     * @return int Number of records deleted.
+     */
+    public static function prune_revoked_tokens(int $retentiondays): int {
+        global $DB;
+
+        if ($retentiondays <= 0) {
+            return 0;
+        }
+
+        $cutoff = time() - ($retentiondays * DAYSECS);
+        // Fall back to the creation time when a revoked row has no revocation
+        // timestamp, so legacy rows are still eligible once old enough.
+        $select = 'revoked = 1 AND COALESCE(timerevoked, timecreated) < :cutoff';
+        $params = ['cutoff' => $cutoff];
+
+        $count = $DB->count_records_select('webservice_elediamcp_token', $select, $params);
+        if ($count > 0) {
+            $DB->delete_records_select('webservice_elediamcp_token', $select, $params);
+        }
+        return $count;
+    }
+
+    /**
      * Fetch a single token metadata record (no secret).
      *
      * @param int $tokenid {webservice_elediamcp_token}.id

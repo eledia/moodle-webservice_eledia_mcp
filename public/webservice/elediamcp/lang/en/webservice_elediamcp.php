@@ -129,6 +129,8 @@ $string['setting_rate_limit_per_hour'] = 'Rate limit per hour (per token)';
 $string['setting_rate_limit_per_hour_desc'] = 'Maximum number of requests per hour for a single token. Default 600.';
 $string['setting_rate_limit_per_minute'] = 'Rate limit per minute (per token)';
 $string['setting_rate_limit_per_minute_desc'] = 'Maximum number of requests per minute for a single token. Default 60.';
+$string['setting_token_retention_days'] = 'Revoked token retention (days)';
+$string['setting_token_retention_days_desc'] = 'How many days to keep the audit record of a revoked MCP token before the scheduled cleanup task deletes it. Connector-provisioned tokens are re-minted regularly, so their revoked records can accumulate. Set to 0 to keep every revoked token record indefinitely.';
 $string['setting_services'] = 'MCP external services';
 $string['setting_services_desc'] = 'The external services that may issue MCP tokens. Only services selected here can be chosen in the self-service token UI or targeted through the internal token API. Create the services under <em>Site administration → Server → Web services → External services</em> first, then enable them here.';
 $string['setting_tools_page_size'] = 'Default page size for tools/list';
@@ -149,3 +151,6 @@ Write tools: moodle_send_message accepts to_user_id (preferred), to_username (ex
 
 Read-only tools are safe to call automatically; write tools require an explicit "confirm" argument.';
 $string['servername'] = 'Moodle MCP Server';
+
+// Scheduled tasks.
+$string['task_prune_revoked_tokens'] = 'Prune old revoked MCP tokens';

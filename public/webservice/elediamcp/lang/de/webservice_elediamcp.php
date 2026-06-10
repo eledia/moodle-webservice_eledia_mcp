@@ -129,6 +129,8 @@ $string['setting_rate_limit_per_hour'] = 'Ratenbegrenzung pro Stunde (pro Token)
 $string['setting_rate_limit_per_hour_desc'] = 'Maximale Anzahl von Anfragen pro Stunde für einen einzelnen Token. Standard 600.';
 $string['setting_rate_limit_per_minute'] = 'Ratenbegrenzung pro Minute (pro Token)';
 $string['setting_rate_limit_per_minute_desc'] = 'Maximale Anzahl von Anfragen pro Minute für einen einzelnen Token. Standard 60.';
+$string['setting_token_retention_days'] = 'Aufbewahrung widerrufener Tokens (Tage)';
+$string['setting_token_retention_days_desc'] = 'Wie viele Tage der Auditeintrag eines widerrufenen MCP-Tokens aufbewahrt wird, bevor die geplante Bereinigungsaufgabe ihn löscht. Vom Connector bereitgestellte Tokens werden regelmäßig neu erzeugt, sodass sich ihre widerrufenen Einträge ansammeln können. Auf 0 setzen, um alle Einträge widerrufener Tokens unbegrenzt aufzubewahren.';
 $string['setting_services'] = 'MCP-externe Dienste';
 $string['setting_services_desc'] = 'Die externen Dienste, die MCP-Tokens ausstellen dürfen. Nur hier ausgewählte Dienste können in der Self-Service-Token-Oberfläche gewählt oder über die interne Token-API angesprochen werden. Erstellen Sie die Dienste zuerst unter <em>Website-Administration → Server → Webservices → Externe Dienste</em> und aktivieren Sie sie dann hier.';
 $string['setting_tools_page_size'] = 'Standard-Seitengröße für tools/list';
@@ -149,3 +151,6 @@ Schreib-Tools: moodle_send_message akzeptiert to_user_id (bevorzugt), to_usernam
 
 Schreibgeschützte Tools können automatisch aufgerufen werden; Schreib-Tools erfordern ein ausdrückliches „confirm“-Argument.';
 $string['servername'] = 'Moodle-MCP-Server';
+
+// Scheduled tasks.
+$string['task_prune_revoked_tokens'] = 'Alte widerrufene MCP-Tokens bereinigen';

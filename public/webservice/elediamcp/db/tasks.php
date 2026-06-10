@@ -15,19 +15,25 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * MCP web service plugin version information.
+ * Scheduled task definitions for the MCP web service plugin.
  *
  * @package     webservice_elediamcp
  * @author      Christopher Reimann <christopher.reimann@eledia.de>
- * @copyright   2025 eLeDia GmbH, Berlin
+ * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->version = 2026060907;
-$plugin->requires = 2023041800;
-$plugin->component = 'webservice_elediamcp';
-$plugin->maturity = MATURITY_BETA;
-$plugin->release = '0.8.2';
+$tasks = [
+    [
+        'classname' => 'webservice_elediamcp\\task\\prune_revoked_tokens',
+        'blocking' => 0,
+        'minute' => 'R',
+        'hour' => '4',
+        'day' => '*',
+        'month' => '*',
+        'dayofweek' => '*',
+    ],
+];
