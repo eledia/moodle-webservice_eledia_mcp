@@ -315,13 +315,24 @@ class token_manager {
      * @param bool $includerevoked Whether to include revoked tokens.
      * @return stdClass[] Ordered newest first.
      */
-    public static function get_user_tokens(int $userid, bool $includerevoked = true): array {
+    public static function get_user_tokens(
+        int $userid,
+        bool $includerevoked = true,
+        bool $selfserviceonly = false
+    ): array {
         global $DB;
 
         $where = 'mt.userid = :userid';
         $params = ['userid' => $userid];
         if (!$includerevoked) {
             $where .= ' AND mt.revoked = 0';
+        }
+        if ($selfserviceonly) {
+            // Self-service tokens have no owning component; programmatic tokens
+            // provisioned by a first-party plugin (e.g. the eLeDia.ai Tutor
+            // connector) are managed automatically and are hidden from the
+            // user's personal token page.
+            $where .= ' AND mt.component IS NULL';
         }
 
         $sql = "SELECT mt.*,

@@ -214,8 +214,10 @@ if (!empty($SESSION->webservice_elediamcp_newtoken)) {
     echo $renderjsonblock($buildclaudeconfig($serverurl, $newtoken));
 }
 
-// Existing tokens table.
-$tokens = token_manager::get_user_tokens((int) $USER->id);
+// Existing tokens table. Show only the user's own self-service tokens;
+// connector-provisioned tokens (with an owning component) are managed
+// automatically by their plugin and are not listed here.
+$tokens = token_manager::get_user_tokens((int) $USER->id, true, true);
 if (empty($tokens)) {
     echo html_writer::div(get_string('tokens_none', 'webservice_elediamcp'), 'alert alert-info');
 } else {
