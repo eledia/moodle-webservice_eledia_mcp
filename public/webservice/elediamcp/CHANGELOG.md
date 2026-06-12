@@ -5,6 +5,23 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.9.0] - 2026-06-12
+
+### Added
+- **Three new AI tools** closing the learner-progress gaps for tutor agents:
+  - `moodle_my_progress` — completion progress per enrolled course
+    (percentage, completed/total tracked activities, course-completed flag),
+    optionally per-activity completion states for a single course.
+  - `moodle_quiz_info` — quizzes across enrolled courses with open/close
+    windows, time limits, allowed attempts and grading method, plus the
+    authenticated user's **own** attempt history and best grade for a single
+    quiz (`cmid`). Never exposes other users' attempts.
+  - `moodle_forum_discussions` — read course forums: visible forums and
+    discussions per course or forum, and the posts of one discussion as plain
+    text. All mod_forum visibility rules enforced through the forum API
+    (group modes, Q&A first-post gating, timed posts, private replies).
+    Read-only by design.
+
 ## [Unreleased]
 
 ### Fixed

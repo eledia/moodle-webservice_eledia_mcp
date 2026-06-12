@@ -21,12 +21,15 @@ namespace webservice_elediamcp\local\ai;
 use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
 use webservice_elediamcp\local\ai\tools\moodle_course_contents;
 use webservice_elediamcp\local\ai\tools\moodle_find_user;
+use webservice_elediamcp\local\ai\tools\moodle_forum_discussions;
 use webservice_elediamcp\local\ai\tools\moodle_get_announcements;
 use webservice_elediamcp\local\ai\tools\moodle_get_resource;
 use webservice_elediamcp\local\ai\tools\moodle_me;
 use webservice_elediamcp\local\ai\tools\moodle_my_assignments;
 use webservice_elediamcp\local\ai\tools\moodle_my_courses;
 use webservice_elediamcp\local\ai\tools\moodle_my_grades;
+use webservice_elediamcp\local\ai\tools\moodle_my_progress;
+use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
@@ -68,10 +71,13 @@ class registry {
             moodle_get_resource::class,
             // Communication & activity feeds.
             moodle_get_announcements::class,
+            moodle_forum_discussions::class,
             moodle_calendar_upcoming::class,
             // Learner progress.
             moodle_my_assignments::class,
             moodle_my_grades::class,
+            moodle_my_progress::class,
+            moodle_quiz_info::class,
             // Write tools (require confirm).
             moodle_send_message::class,
         ];

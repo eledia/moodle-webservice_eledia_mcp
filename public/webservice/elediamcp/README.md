@@ -219,9 +219,12 @@ two-step confirmation.
 | `moodle_course_contents` | read | Lists sections and visible activities of a course the user may access. |
 | `moodle_get_resource` | read | Returns the readable body of a page/book chapter/label/URL/resource by `cmid`. |
 | `moodle_get_announcements` | read | Recent news-forum posts across the user's enrolled courses. |
+| `moodle_forum_discussions` | read | Course forum discussions and posts (enforces groups, Q&A gating, timed posts and private replies via the forum API). |
 | `moodle_calendar_upcoming` | read | Upcoming deadlines and events scoped to the user's courses/groups. |
 | `moodle_my_assignments` | read | Assignment submission and grade status across enrolled courses. |
 | `moodle_my_grades` | read | Course-final grades, or per-item breakdown (respects hidden grade items). |
+| `moodle_my_progress` | read | Completion progress per enrolled course (percentage, completed/total), optionally per-activity states for one course. |
+| `moodle_quiz_info` | read | Quizzes with timing/attempt limits and the user's **own** attempt history and best grade — never other users' attempts. |
 | `moodle_send_message` | **write** | Sends a one-to-one message. Two-step: preview, then `confirm=true`. Respects `can_send_message()`. |
 
 When **Expose raw Moodle Web Service functions** is enabled, every external
