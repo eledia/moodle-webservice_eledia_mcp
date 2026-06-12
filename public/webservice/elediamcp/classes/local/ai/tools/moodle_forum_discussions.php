@@ -434,6 +434,12 @@ class moodle_forum_discussions implements ai_tool {
         global $DB;
 
         [$course, $cminfo] = get_course_and_cm_from_cmid($cmid, 'forum', 0, (int) $user->id);
+        // Course-access gate before module visibility: uservisible does not
+        // check course enrolment/visibility (see moodle_get_resource).
+        if (!is_siteadmin($user) && !can_access_course($course, $user)) {
+            throw new tool_exception("No forum with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]);
+        }
         if (!$cminfo->uservisible) {
             throw new tool_exception("No forum with cmid {$cmid} is visible to you.",
                 ['cmid' => $cmid]);

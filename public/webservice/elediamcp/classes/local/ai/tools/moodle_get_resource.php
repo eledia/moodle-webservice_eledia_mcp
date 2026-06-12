@@ -224,6 +224,18 @@ class moodle_get_resource implements ai_tool {
         }
         $context = context_module::instance($cmid);
         $isadmin = is_siteadmin($user);
+        // Course-access gate FIRST: cm_info::uservisible checks module visibility,
+        // availability and mod/<x>:view, but NOT course enrolment or course
+        // visibility — and mod/page:view etc. are granted to the 'user' archetype.
+        // Without this, any authenticated user could read a module in a course
+        // (even a hidden one) they cannot otherwise access. can_access_course()
+        // honours enrolment, the course-visible flag and moodle/course:view*.
+        if (!$isadmin && !can_access_course($course, $user)) {
+            throw new tool_exception(
+                "Course module {$cmid} is not visible to you.",
+                ['cmid' => $cmid]
+            );
+        }
         if (!$cm->uservisible && !$isadmin) {
             throw new tool_exception(
                 "You do not have permission to view course module {$cmid}.",

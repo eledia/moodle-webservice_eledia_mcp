@@ -29,7 +29,9 @@ use webservice_elediamcp\local\ai\tools\moodle_my_assignments;
 use webservice_elediamcp\local\ai\tools\moodle_my_courses;
 use webservice_elediamcp\local\ai\tools\moodle_my_grades;
 use webservice_elediamcp\local\ai\tools\moodle_my_progress;
+use webservice_elediamcp\local\ai\tools\moodle_my_submission_files;
 use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
+use webservice_elediamcp\local\ai\tools\moodle_search_content;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
@@ -69,6 +71,7 @@ class registry {
             moodle_search_courses::class,
             moodle_course_contents::class,
             moodle_get_resource::class,
+            moodle_search_content::class,
             // Communication & activity feeds.
             moodle_get_announcements::class,
             moodle_forum_discussions::class,
@@ -78,6 +81,7 @@ class registry {
             moodle_my_grades::class,
             moodle_my_progress::class,
             moodle_quiz_info::class,
+            moodle_my_submission_files::class,
             // Write tools (require confirm).
             moodle_send_message::class,
         ];

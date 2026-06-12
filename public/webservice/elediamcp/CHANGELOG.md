@@ -5,6 +5,34 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.0] - 2026-06-12
+
+### Added
+- `moodle_search_content` — full-text search across the content the user can
+  access via core global search (all engine access checks apply); graceful
+  fallback to visible activity names/descriptions when global search is
+  disabled, flagged via the `engine` response field.
+- `moodle_my_submission_files` — the authenticated user's **own** latest
+  submission for one assignment: attached files (name, size, mime type,
+  download URL) and the plain text of online-text submissions. Strictly
+  self-scoped by construction.
+- Negative-case test sweep across the original twelve AI tools
+  (visibility/enrolment/privacy boundaries), complementing the 0.9.0 tests.
+
+### Security
+- **`moodle_get_resource` no longer returns module content from courses the
+  caller cannot access.** It previously gated only on `cm_info::uservisible`,
+  which checks module visibility/availability and `mod/<x>:view` but **not**
+  course enrolment or course visibility — and `mod/page:view` (etc.) is granted
+  to the `user` archetype, so any authenticated user could read a page/book/URL
+  in any course, including hidden ones. A `can_access_course()` gate is now
+  applied first. The same gate was added defensively to
+  `moodle_my_submission_files` and `moodle_forum_discussions` (both resolve a
+  module by `cmid`). Found by the 1.0 negative-case test sweep.
+
+### Changed
+- Plugin maturity raised to **STABLE**.
+
 ## [0.9.0] - 2026-06-12
 
 ### Added
