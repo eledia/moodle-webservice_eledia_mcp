@@ -115,6 +115,18 @@ $string['tokens_no_services_permitted'] = 'Auf dieser Website sind MCP-Dienste k
 $string['tokens_none'] = 'Sie haben noch keine MCP-Tokens erstellt.';
 
 // Settings.
+$string['configuration_error_nonnegative'] = 'Geben Sie einen Wert ab 0 ein.';
+$string['configuration_heading'] = 'MCP-Konfiguration';
+$string['configuration_hint'] = 'Konfigurieren Sie externe Dienste, Token-Richtlinie, Sicherheitslimits und den MCP-Tool-Katalog.';
+$string['configuration_saved'] = 'MCP-Konfiguration gespeichert.';
+$string['configuration_security_heading'] = 'Sicherheit und Anfragegrenzen';
+$string['configuration_services_heading'] = 'Dienste und Tokens';
+$string['configuration_shell_link'] = 'MCP Plugin Shell öffnen';
+$string['configuration_shell_link_desc'] = 'Öffnet die plugin-eigene MCP-Konfigurationsseite.';
+$string['configuration_tag_mcp'] = 'MCP';
+$string['configuration_tag_security'] = 'Sicherheit';
+$string['configuration_tagline'] = 'Konfiguration';
+$string['configuration_tools_heading'] = 'Tool-Katalog';
 $string['setting_allow_token_in_query'] = 'Token im Query-String erlauben';
 $string['setting_allow_token_in_query_desc'] = 'Wenn aktiviert, akzeptiert der MCP-Endpunkt den Token über den Query-Parameter <code>?wstoken=</code>. Standardmäßig deaktiviert, da Tokens in URLs in Webserver-Protokolle, den Browserverlauf und HTTP-Referer-Header gelangen. Clients sollten den <code>Authorization: Bearer</code>-Header verwenden.';
 $string['setting_allowed_origins'] = 'Erlaubte CORS-Origins';

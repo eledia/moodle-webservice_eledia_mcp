@@ -29,6 +29,13 @@ defined('MOODLE_INTERNAL') || die();
 if ($hassiteconfig) {
     global $DB;
 
+    $configurationurl = new moodle_url('/webservice/elediamcp/configuration.php');
+    $settings->add(new admin_setting_heading(
+        'webservice_elediamcp/configuration_shell',
+        get_string('configuration_shell_link', 'webservice_elediamcp'),
+        html_writer::link($configurationurl, get_string('configuration_shell_link_desc', 'webservice_elediamcp'))
+    ));
+
     // Token management: which external services may issue MCP tokens.
     $mcpservices = [];
     if (during_initial_install() === false) {

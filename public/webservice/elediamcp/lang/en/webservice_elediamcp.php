@@ -115,6 +115,18 @@ $string['tokens_no_services_permitted'] = 'MCP services are configured on this s
 $string['tokens_none'] = 'You have not created any MCP tokens yet.';
 
 // Settings.
+$string['configuration_error_nonnegative'] = 'Enter a value of zero or higher.';
+$string['configuration_heading'] = 'MCP configuration';
+$string['configuration_hint'] = 'Configure external services, token policy, security limits and the MCP tool catalogue.';
+$string['configuration_saved'] = 'MCP configuration saved.';
+$string['configuration_security_heading'] = 'Security and request limits';
+$string['configuration_services_heading'] = 'Services and tokens';
+$string['configuration_shell_link'] = 'Open MCP Plugin Shell';
+$string['configuration_shell_link_desc'] = 'Open the plugin-owned MCP configuration page.';
+$string['configuration_tag_mcp'] = 'MCP';
+$string['configuration_tag_security'] = 'Security';
+$string['configuration_tagline'] = 'Configuration';
+$string['configuration_tools_heading'] = 'Tool catalogue';
 $string['setting_allow_token_in_query'] = 'Allow token in query string';
 $string['setting_allow_token_in_query_desc'] = 'When enabled, the MCP endpoint accepts the token through the <code>?wstoken=</code> query parameter. Disabled by default because tokens in URLs leak into web server logs, browser history, and HTTP referer headers. Clients should use the <code>Authorization: Bearer</code> header.';
 $string['setting_allowed_origins'] = 'Allowed CORS origins';
