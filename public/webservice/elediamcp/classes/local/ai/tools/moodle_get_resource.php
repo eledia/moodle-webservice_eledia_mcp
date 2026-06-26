@@ -21,7 +21,7 @@ namespace webservice_elediamcp\local\ai\tools;
 use cache;
 use cm_info;
 use context_module;
-use context_system;
+use core_component;
 use moodle_url;
 use stdClass;
 use Throwable;
@@ -357,6 +357,15 @@ class moodle_get_resource implements ai_tool {
      */
     private static function generic_intro(string $modname, int $instanceid, array $textopts): string {
         global $DB;
+
+        $modname = clean_param($modname, PARAM_PLUGIN);
+        if ($modname === ''
+                || core_component::get_plugin_directory('mod', $modname) === null
+                || !$DB->record_exists('modules', ['name' => $modname])
+                || !$DB->get_manager()->table_exists($modname)) {
+            return '';
+        }
+
         try {
             $record = $DB->get_record($modname, ['id' => $instanceid], 'id, intro, introformat', IGNORE_MISSING);
             if ($record && !empty($record->intro)) {
@@ -377,7 +386,7 @@ class moodle_get_resource implements ai_tool {
      */
     private static function collect_files(context_module $context, string $modname): array {
         $component = 'mod_' . $modname;
-        $filearea = $modname === 'folder' ? 'content' : 'content';
+        $filearea = 'content';
         $fs = get_file_storage();
         $files = $fs->get_area_files($context->id, $component, $filearea, 0, 'filename ASC', false);
         $out = [];

@@ -50,7 +50,7 @@ function webservice_elediamcp_extend_navigation_user_settings($navigation, $user
     if (isguestuser() || !isloggedin()) {
         return;
     }
-    if (!has_capability('webservice/elediamcp:managetokens', context_system::instance())) {
+    if (!has_capability('webservice/elediamcp:managetokens', \core\context\system::instance())) {
         return;
     }
 

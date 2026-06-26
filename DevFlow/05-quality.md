@@ -407,6 +407,93 @@ Implementation fixes are still pending.
 
 ---
 
+## Review-Protokoll
+
+### review51 webservice_elediamcp Code-Review
+Datum:   2026-06-25
+Branch:  review_johannes
+Typ:     Moodle-Core-/Security-Review
+Status:  fixed
+
+**Gesamteinschätzung**
+Das Plugin ist sicherheitsbewusst aufgebaut: Capability-Checks,
+IDOR-Schutz über Kurszugriff, Zwei-Schritt-Bestätigung für Write-Tools,
+Session-Key-Schutz, Privacy-API und Audit-Events sind vorhanden.
+
+**Befunde und Ergebnis**
+
+| ID | Schwere | Thema | Status |
+|---|---|---|---|
+| KR-1 | kritisch | `moodle_forum_discussions::read_posts()` prüfte Capability ohne explizite User-ID | fixed |
+| KR-2 | kritisch | `moodle_get_resource::generic_intro()` nutzte dynamischen Modul-Tabellennamen ohne ausreichende Prüfung | fixed |
+| HO-1 | hoch | Rate-Limiter ist nicht atomar | documented |
+| HO-2 | hoch | `moodle_me` / `moodle_verify_user_context` gaben E-Mail unabhängig von `emaildisplay` aus | fixed |
+| HO-3 | hoch | `allowed_origins` nutzte `PARAM_RAW` und hatte keine Formularvalidierung | fixed |
+| HO-4 | hoch | Neues Token wurde kurz in der Moodle-Session zwischengespeichert | fixed |
+| HO-5 | hoch | `moodle_send_message` hatte keinen expliziten `moodle/site:sendmessage`-Check | fixed |
+| MI-1 | mittel | Rate-Limit-Verhalten nicht ausreichend dokumentiert | fixed |
+| MI-2 | mittel | Tool-/Ressourcen-Cache-TTL prüfen | ok |
+| MI-3 | mittel | Forum-Tool hatte N+1-Abfragen für Firstposts/Replycounts | fixed |
+| MI-4 | mittel | Quiz-Tool brauchte konsistente `can_access_course()`-Prüfung | fixed |
+| MI-5 | mittel | MCP `SERVER_VERSION` war nicht semantisch auf Pluginstand | fixed |
+| MI-6 | mittel | Create-User-Tool sollte Passwort nach Anlage aus dem Record entfernen | fixed |
+| MI-7 | mittel | Raw-Webservice-Funktionen brauchten sichereren Default/Warnung | fixed |
+| MI-8 | mittel | Request-Body wurde doppelt aus `php://input` gelesen | fixed |
+| NI | niedrig | Kosmetik/Standards: Shell-Klassen, Settings-Redirect, Search-Kommentar, Privacy-Cleanup, OAuth-Doku-URL | fixed |
+
+**Verifikation**
+- PHP-Syntaxprüfung für geänderte/neue Plugin-Dateien: passed
+- `git diff --check`: passed
+- HTTP/MCP-Smoke: `tools/list` enthält `moodle_create_user` und `moodle_create_course`
+- PHPUnit: not run, lokale Moodle-PHPUnit-Umgebung ohne `$CFG->phpunit_dataroot`
+
+---
+
+### review52 webservice_elediamcp UX/UI-Review
+Datum:   2026-06-26
+Branch:  review_johannes
+Typ:     eLeDia UX/UI-Review
+Status:  fixed
+
+**Gesamteinschätzung**
+Die UI ist für ein Webservice-Plugin ungewöhnlich sorgfältig gestaltet:
+CSS-Namespacing, Sprachstring-Abdeckung, Accessibility und Plugin-Shell-Fallback
+sind grundsätzlich sauber.
+
+**Befunde und Ergebnis**
+
+| ID | Schwere | Thema | Status |
+|---|---|---|---|
+| M1 | mittel | `configuration_form.php` hatte keine `addHelpButton()`-Aufrufe für Settings-Felder | fixed |
+| M2 | mittel | `token/index.php` nutzte nicht die Plugin Shell und wirkte für Nicht-Admins inkonsistent | fixed |
+| K1 | klein | Toter Sprachstring `tokens_no_services` | fixed |
+| K2 | klein | Einzelne Token-Status-/Danger-Farben waren hartcodiert statt über Variablen geführt | fixed |
+| K3 | klein | Wrapper-Klasse `webservice-elediamcp-token-page` war semantisch zu eng | fixed |
+
+**Verifikation**
+- PHP-Syntaxprüfung für geänderte Dateien: passed
+- `git diff --check`: passed
+- HTTP-Smoke auf Konfigurations- und Token-Seite: unauthentifiziert sauberer Login-Redirect, kein Fatal
+
+---
+
+### review53 webservice_elediamcp Handover
+Datum:   2026-06-25
+Branch:  review_johannes
+Typ:     Handover aus read-only Code-Review
+Status:  integrated
+
+**Kernaussage**
+Die Handover-Notizen deckten sich mit dem Code-Review: keine akuten SQLi/XSS/SSRF/CSRF-Lücken, gute Privacy-Provider-Basis und sichere Token-Delegation an Moodle-Core. Die genannten Härtungen wurden in `review51` aufgegriffen.
+
+**Übernommene Punkte**
+- MCP-Capability wird hart erzwungen.
+- `expose_raw_functions` hat einen sicheren Default für neue Installationen.
+- CORS-Wildcard/Credentials-Kombination ist entschärft.
+- Tote Ternär-/Kosmetikpunkte und Moodle-5.x-Kontextstil wurden bereinigt, soweit im aktuellen Diff relevant.
+
+---
+
 ## Regeln
 
 - Jeder Bug bekommt eine Severity — auch S4 ist eine Severity.

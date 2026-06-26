@@ -280,6 +280,8 @@ class moodle_verify_user_context implements ai_tool {
             ];
         }
 
+        $email = (int) ($user->emaildisplay ?? 2) >= 1 ? (string) ($user->email ?? '') : '';
+
         $payload = [
             'valid' => true,
             'checked_at' => gmdate('c'),
@@ -287,7 +289,7 @@ class moodle_verify_user_context implements ai_tool {
                 'id' => (int) $user->id,
                 'username' => (string) $user->username,
                 'fullname' => fullname($user),
-                'email' => (string) ($user->email ?? ''),
+                'email' => $email,
                 'lang' => (string) ($user->lang ?: ($CFG->lang ?? 'en')),
                 'timezone' => (string) \core_date::get_user_timezone($user),
                 'profile_url' => (new moodle_url('/user/profile.php', ['id' => $user->id]))->out(false),

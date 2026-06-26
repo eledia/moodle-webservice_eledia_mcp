@@ -264,6 +264,16 @@ class moodle_quiz_info implements ai_tool {
 
         foreach ($rows as $r) {
             $cmid = (int) $r->cmid;
+            $course = get_course((int) $r->courseid);
+            if (!is_siteadmin($user) && !can_access_course($course, $user)) {
+                if ($cmidfilter > 0) {
+                    throw new tool_exception(
+                        "No quiz with cmid {$cmidfilter} is visible to you.",
+                        ['cmid' => $cmidfilter]
+                    );
+                }
+                continue;
+            }
             $modinfo = get_fast_modinfo((int) $r->courseid, $userid);
             $cm = $modinfo->cms[$cmid] ?? null;
             if (!$cm || !$cm->uservisible) {

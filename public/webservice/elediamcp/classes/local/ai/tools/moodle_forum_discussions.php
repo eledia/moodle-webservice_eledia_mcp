@@ -317,15 +317,33 @@ class moodle_forum_discussions implements ai_tool {
 
             $discussions = $DB->get_records('forum_discussions', ['forum' => (int) $forum->id],
                 'timemodified DESC');
+            $firstpostids = array_values(array_filter(array_map(
+                static fn($discussion): int => (int) $discussion->firstpost,
+                $discussions
+            )));
+            $firstposts = !empty($firstpostids)
+                ? $DB->get_records_list('forum_posts', 'id', $firstpostids)
+                : [];
+            $replycounts = [];
+            if (!empty($discussions)) {
+                [$insql, $params] = $DB->get_in_or_equal(array_keys($discussions), SQL_PARAMS_NAMED, 'discussion');
+                $sql = "SELECT discussion, COUNT(1) AS replycount
+                          FROM {forum_posts}
+                         WHERE discussion {$insql}
+                               AND parent <> 0
+                               AND privatereplyto = 0
+                      GROUP BY discussion";
+                foreach ($DB->get_records_sql($sql, $params) as $countrow) {
+                    $replycounts[(int) $countrow->discussion] = (int) $countrow->replycount;
+                }
+            }
             foreach ($discussions as $discussion) {
                 // The forum API enforces groups, timed posts and Q&A rules.
                 if (!forum_user_can_see_discussion($forum, $discussion, $context, $user)) {
                     continue;
                 }
-                $firstpost = $DB->get_record('forum_posts', ['id' => (int) $discussion->firstpost]);
-                $replycount = $DB->count_records_select('forum_posts',
-                    'discussion = :did AND parent <> 0 AND privatereplyto = 0',
-                    ['did' => (int) $discussion->id]);
+                $firstpost = $firstposts[(int) $discussion->firstpost] ?? null;
+                $replycount = $replycounts[(int) $discussion->id] ?? 0;
 
                 $entries[] = [
                     'discussion_id' => (int) $discussion->id,
@@ -380,7 +398,7 @@ class moodle_forum_discussions implements ai_tool {
         [$forum, $cm] = self::resolve_forum((int) $cm->id, $user);
         $context = context_module::instance($cm->id);
 
-        require_capability('mod/forum:viewdiscussion', $context);
+        require_capability('mod/forum:viewdiscussion', $context, (int) $user->id);
         if (!forum_user_can_see_discussion($forum, $discussion, $context, $user)) {
             throw new tool_exception("Discussion {$discussionid} is not visible to you.",
                 ['discussion_id' => $discussionid]);
@@ -455,10 +473,18 @@ class moodle_forum_discussions implements ai_tool {
      * @return string
      */
     private static function author_name(int $userid): string {
+        static $cache = [];
+
+        if (array_key_exists($userid, $cache)) {
+            return $cache[$userid];
+        }
+
         $author = \core_user::get_user($userid);
         if (!$author || !empty($author->deleted)) {
+            $cache[$userid] = '';
             return '';
         }
-        return fullname($author);
+        $cache[$userid] = fullname($author);
+        return $cache[$userid];
     }
 }

@@ -18,6 +18,9 @@ namespace webservice_elediamcp;
 
 use advanced_testcase;
 use webservice_elediamcp\local\ai\registry;
+use webservice_elediamcp\local\ai\tool_exception;
+use webservice_elediamcp\local\ai\tools\moodle_create_course;
+use webservice_elediamcp\local\ai\tools\moodle_create_user;
 use webservice_elediamcp\local\ai\tools\moodle_me;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
@@ -30,6 +33,8 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  * @covers      \webservice_elediamcp\local\ai\registry
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_course
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_user
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_me
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
@@ -41,12 +46,16 @@ final class ai_tools_test extends advanced_testcase {
         $names = registry::names();
         $this->assertContains('moodle_me', $names);
         $this->assertContains('moodle_verify_user_context', $names);
+        $this->assertContains('moodle_create_user', $names);
+        $this->assertContains('moodle_create_course', $names);
 
         $this->assertSame(moodle_me::class, registry::find('moodle_me'));
         $this->assertSame(
             moodle_verify_user_context::class,
             registry::find('moodle_verify_user_context')
         );
+        $this->assertSame(moodle_create_user::class, registry::find('moodle_create_user'));
+        $this->assertSame(moodle_create_course::class, registry::find('moodle_create_course'));
         $this->assertNull(registry::find('does_not_exist'));
     }
 
@@ -101,6 +110,22 @@ final class ai_tools_test extends advanced_testcase {
     }
 
     /**
+     * moodle_me respects the user's email visibility preference.
+     */
+    public function test_moodle_me_hides_private_email(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user([
+            'email' => 'hidden@example.test',
+            'emaildisplay' => 0,
+        ]);
+        $this->setUser($user);
+
+        $output = moodle_me::execute([], $user);
+
+        $this->assertSame('', $output['user']['email']);
+    }
+
+    /**
      * moodle_verify_user_context lists active enrolments with role information.
      */
     public function test_moodle_verify_user_context_lists_courses(): void {
@@ -121,6 +146,23 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertSame((int) $course->id, $output['courses'][0]['id']);
         $this->assertSame('C1', $output['courses'][0]['shortname']);
         $this->assertContains('student', $output['courses'][0]['roles']);
+    }
+
+    /**
+     * moodle_verify_user_context respects the user's email visibility preference.
+     */
+    public function test_moodle_verify_user_context_hides_private_email(): void {
+        $this->resetAfterTest(true);
+
+        $user = $this->getDataGenerator()->create_user([
+            'email' => 'hidden-context@example.test',
+            'emaildisplay' => 0,
+        ]);
+        $this->setUser($user);
+
+        $output = moodle_verify_user_context::execute([], $user);
+
+        $this->assertSame('', $output['user']['email']);
     }
 
     /**
@@ -170,5 +212,99 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertArrayHasKey('capabilities', $output);
         $this->assertContains('*', $output['capabilities']);
         $this->assertTrue($output['is_admin']);
+    }
+
+    /**
+     * moodle_create_user previews first and creates only after confirmation.
+     */
+    public function test_moodle_create_user_preview_and_confirm(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $USER;
+
+        $args = [
+            'username' => 'mcp.created',
+            'firstname' => 'MCP',
+            'lastname' => 'Created',
+            'email' => 'mcp.created@example.test',
+        ];
+
+        $preview = moodle_create_user::execute($args, $USER);
+        $this->assertFalse($preview['created']);
+        $this->assertTrue($preview['requires_confirmation']);
+        $this->assertFalse($DB->record_exists('user', ['username' => 'mcp.created']));
+
+        $created = moodle_create_user::execute($args + ['confirm' => true], $USER);
+        $this->assertTrue($created['created']);
+        $this->assertFalse($created['requires_confirmation']);
+        $this->assertSame('mcp.created', $created['user']['username']);
+        $this->assertTrue($DB->record_exists('user', ['username' => 'mcp.created']));
+    }
+
+    /**
+     * moodle_create_user requires user creation capability.
+     */
+    public function test_moodle_create_user_requires_capability(): void {
+        $this->resetAfterTest(true);
+        $user = $this->getDataGenerator()->create_user();
+        $this->setUser($user);
+
+        $this->expectException(\required_capability_exception::class);
+        moodle_create_user::execute([
+            'username' => 'blocked.user',
+            'firstname' => 'Blocked',
+            'lastname' => 'User',
+            'email' => 'blocked.user@example.test',
+            'confirm' => true,
+        ], $user);
+    }
+
+    /**
+     * moodle_create_course previews first and creates only after confirmation.
+     */
+    public function test_moodle_create_course_preview_and_confirm(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $USER;
+
+        $category = $this->getDataGenerator()->create_category(['name' => 'MCP Courses']);
+        $args = [
+            'fullname' => 'MCP Created Course',
+            'shortname' => 'MCP-CREATED',
+            'category_id' => (int) $category->id,
+            'summary' => 'Created through MCP.',
+        ];
+
+        $preview = moodle_create_course::execute($args, $USER);
+        $this->assertFalse($preview['created']);
+        $this->assertTrue($preview['requires_confirmation']);
+        $this->assertFalse($DB->record_exists('course', ['shortname' => 'MCP-CREATED']));
+
+        $created = moodle_create_course::execute($args + ['confirm' => true], $USER);
+        $this->assertTrue($created['created']);
+        $this->assertFalse($created['requires_confirmation']);
+        $this->assertSame('MCP-CREATED', $created['course']['shortname']);
+        $this->assertSame((int) $category->id, $created['course']['category_id']);
+        $this->assertTrue($DB->record_exists('course', ['shortname' => 'MCP-CREATED']));
+    }
+
+    /**
+     * moodle_create_course rejects duplicate shortnames as tool errors.
+     */
+    public function test_moodle_create_course_duplicate_shortname(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $USER;
+
+        $this->getDataGenerator()->create_course(['shortname' => 'DUPLICATE']);
+
+        $this->expectException(tool_exception::class);
+        moodle_create_course::execute([
+            'fullname' => 'Duplicate Course',
+            'shortname' => 'DUPLICATE',
+            'confirm' => true,
+        ], $USER);
     }
 }

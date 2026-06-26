@@ -200,6 +200,7 @@ class moodle_send_message implements ai_tool {
         if ($fromuserid <= 0 || isguestuser($user)) {
             throw new tool_exception('Guest users cannot send messages.');
         }
+        require_capability('moodle/site:sendmessage', context_system::instance(), $fromuserid);
 
         $message = isset($arguments['message']) ? trim((string) $arguments['message']) : '';
         if ($message === '') {

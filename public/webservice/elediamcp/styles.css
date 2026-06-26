@@ -1,0 +1,608 @@
+.webservice-elediamcp-form {
+    display: grid;
+    gap: 0.9rem;
+}
+
+.webservice-elediamcp-page-content {
+    --webservice-elediamcp-status-active: var(--lh-success, #2e7d32);
+    --webservice-elediamcp-status-active-rgb: 46, 125, 50;
+    --webservice-elediamcp-danger: var(--lh-danger, #c42059);
+    --webservice-elediamcp-danger-rgb: 196, 32, 89;
+    --webservice-elediamcp-danger-hover: var(--lh-danger-dark, #a31449);
+    display: grid;
+    gap: 0.9rem;
+}
+
+.webservice-elediamcp-page-title {
+    color: var(--lh-text, #1f2937);
+    font-size: 1.35rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0;
+}
+
+.webservice-elediamcp-page-intro {
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin: -0.35rem 0 0.2rem;
+}
+
+.webservice-elediamcp-section-warning,
+.webservice-elediamcp-section-info {
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin: 0.7rem 0 0.85rem;
+    padding: 0.7rem 0.95rem;
+}
+
+.webservice-elediamcp-token-placeholder-hint {
+    white-space: nowrap;
+}
+
+.webservice-elediamcp-token-placeholder-hint code {
+    background: transparent;
+    margin: 0;
+    padding: 0;
+}
+
+.webservice-elediamcp-card {
+    background: var(--lh-bg-white, #fff);
+    border: 1px solid var(--lh-border, #dbe7ee);
+    border-radius: var(--lh-radius-sm, 8px);
+    box-shadow: var(--lh-shadow-card, 0 2px 8px rgba(15, 23, 42, 0.05));
+    overflow: hidden;
+    padding: 0;
+}
+
+.webservice-elediamcp-card__title {
+    color: var(--lh-text, #1f2937);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0.9rem 0 -0.35rem;
+    padding: 0 0 0.55rem;
+    border-bottom: 1px solid var(--lh-border, #dbe7ee);
+}
+
+.webservice-elediamcp-card__title:first-child {
+    margin-top: 0;
+}
+
+.webservice-elediamcp-card .fitem,
+.webservice-elediamcp-card .form-group,
+.webservice-elediamcp-card .mb-3 {
+    border-bottom: 1px solid rgba(219, 231, 238, 0.72);
+    column-gap: 1rem;
+    display: grid;
+    grid-template-columns: minmax(11rem, 13.5rem) minmax(0, 1fr);
+    margin: 0;
+    padding: 0.85rem 1rem;
+}
+
+.webservice-elediamcp-card .fitem.row,
+.webservice-elediamcp-card .form-group.row,
+.webservice-elediamcp-card .mb-3.row {
+    margin-left: 0;
+    margin-right: 0;
+}
+
+.webservice-elediamcp-card .fitem:last-child,
+.webservice-elediamcp-card .form-group:last-child,
+.webservice-elediamcp-card .mb-3:last-child {
+    border-bottom: 0;
+}
+
+.webservice-elediamcp-card .form-label,
+.webservice-elediamcp-card .col-form-label,
+.webservice-elediamcp-card .fitemtitle {
+    color: var(--lh-text, #1f2937);
+    font-weight: 700;
+    grid-column: 1;
+    max-width: none;
+    padding: 0.2rem 0 0;
+    text-align: left;
+    width: auto;
+}
+
+.webservice-elediamcp-card .felement,
+.webservice-elediamcp-card .checkbox {
+    display: block !important;
+    grid-column: 2;
+    max-width: none;
+    min-width: 0;
+    padding: 0;
+    width: auto;
+}
+
+.webservice-elediamcp-card .form-description,
+.webservice-elediamcp-card .form-text,
+.webservice-elediamcp-card .form-control-static,
+.webservice-elediamcp-card .felement[data-fieldtype="static"] {
+    color: var(--lh-muted, #5f6b77);
+    font-size: 0.78rem;
+    line-height: 1.42;
+}
+
+.webservice-elediamcp-card .checkbox span[id$="_description"] {
+    color: var(--lh-muted, #5f6b77);
+    font-size: 0.78rem;
+    line-height: 1.42;
+}
+
+.webservice-elediamcp-card .fitem.femptylabel,
+.webservice-elediamcp-card .mb-3.femptylabel {
+    border-top: 0;
+    margin-top: -0.45rem;
+    padding-top: 0;
+}
+
+.webservice-elediamcp-card .fitem.femptylabel .col-form-label,
+.webservice-elediamcp-card .mb-3.femptylabel .col-form-label {
+    display: none !important;
+}
+
+.webservice-elediamcp-card .fitem.femptylabel .felement,
+.webservice-elediamcp-card .mb-3.femptylabel .felement {
+    grid-column: 2;
+}
+
+.webservice-elediamcp-card .fitem:not(.femptylabel):has(+ .femptylabel) {
+    border-bottom: 0;
+    padding-bottom: 0.35rem;
+}
+
+.webservice-elediamcp-card .form-check {
+    align-items: flex-start;
+    display: flex;
+    gap: 0.55rem;
+    margin: 0;
+    padding-left: 0;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-card .checkbox {
+    grid-column: 2;
+    padding-left: 0 !important;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-card .form-check {
+    padding-left: 0 !important;
+}
+
+.webservice-elediamcp-card .form-check-input {
+    flex: 0 0 auto;
+    margin-left: 0 !important;
+    margin-top: 0.25rem;
+}
+
+.webservice-elediamcp-card .form-check-label {
+    color: var(--lh-text, #1f2937);
+    font-size: 0.84rem;
+    line-height: 1.42;
+}
+
+.webservice-elediamcp-card select,
+.webservice-elediamcp-card textarea,
+.webservice-elediamcp-card input[type="text"] {
+    border-color: var(--lh-border, #dbe7ee);
+    border-radius: var(--lh-radius-sm, 8px);
+    max-width: 100%;
+}
+
+.webservice-elediamcp-card textarea {
+    width: min(100%, 42rem);
+}
+
+.webservice-elediamcp-card select[multiple] {
+    min-height: 8rem;
+    width: min(100%, 42rem);
+}
+
+.webservice-elediamcp-card input[type="checkbox"] {
+    accent-color: var(--lh-primary, #194866);
+}
+
+.webservice-elediamcp-token-card {
+    padding: 0;
+}
+
+.webservice-elediamcp-token-card .alert {
+    margin: 1rem;
+}
+
+.webservice-elediamcp-token-list-card {
+    padding: 1rem;
+}
+
+.webservice-elediamcp-list-header {
+    align-items: center;
+    display: flex;
+    gap: 1rem;
+    margin: 0 0 0.25rem;
+    padding: 0 0 0.75rem;
+}
+
+.webservice-elediamcp-list-header__icon {
+    align-items: center;
+    background: rgba(25, 72, 102, 0.08);
+    border-radius: var(--lh-radius-sm, 8px);
+    color: var(--lh-primary, #194866);
+    display: inline-flex;
+    flex: 0 0 auto;
+    height: 2.75rem;
+    justify-content: center;
+    width: 2.75rem;
+}
+
+.webservice-elediamcp-list-header__text {
+    min-width: 0;
+}
+
+.webservice-elediamcp-list-header__eyebrow {
+    color: var(--lh-muted, #5f6b77);
+    font-size: 0.78rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    line-height: 1.2;
+    text-transform: uppercase;
+}
+
+.webservice-elediamcp-list-header__title {
+    color: var(--lh-text, #1f2937);
+    font-size: 1rem;
+    font-weight: 800;
+    line-height: 1.25;
+    margin: 0.2rem 0 0;
+}
+
+.webservice-elediamcp-token-table-wrap {
+    border: 0;
+    overflow-x: auto;
+}
+
+.webservice-elediamcp-token-table {
+    border: 0 !important;
+    border-collapse: collapse;
+    border-style: hidden;
+    font-size: 0.9rem;
+    min-width: 48rem;
+    width: 100%;
+}
+
+.webservice-elediamcp-token-table thead,
+.webservice-elediamcp-token-table tbody,
+.webservice-elediamcp-token-table tr {
+    border-left: 0 !important;
+    border-right: 0 !important;
+}
+
+.webservice-elediamcp-token-table th,
+.webservice-elediamcp-token-table td {
+    border-bottom: 1px solid var(--lh-border, #dbe7ee);
+    border-left: 0 !important;
+    border-right: 0 !important;
+    border-top: 0 !important;
+    padding: 0.95rem 0.8rem;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.webservice-elediamcp-token-table th {
+    color: var(--lh-text, #1f2937);
+    font-weight: 800;
+}
+
+.webservice-elediamcp-token-table tr:last-child td {
+    border-bottom: 0;
+}
+
+.webservice-elediamcp-token-name {
+    color: var(--lh-primary, #194866);
+    font-weight: 800;
+}
+
+.webservice-elediamcp-token-muted {
+    color: var(--lh-muted, #5f6b77);
+}
+
+.webservice-elediamcp-status {
+    align-items: center;
+    border-radius: 999px;
+    display: inline-flex;
+    font-size: 0.72rem;
+    font-weight: 800;
+    line-height: 1;
+    padding: 0.35rem 0.6rem;
+}
+
+.webservice-elediamcp-status--active {
+    background: rgba(var(--webservice-elediamcp-status-active-rgb), 0.12);
+    color: var(--webservice-elediamcp-status-active);
+}
+
+.webservice-elediamcp-status--revoked {
+    background: rgba(95, 107, 119, 0.12);
+    color: var(--lh-muted, #5f6b77);
+}
+
+.webservice-elediamcp-token-actions {
+    align-items: center;
+    display: inline-flex;
+    gap: 0.35rem;
+}
+
+.webservice-elediamcp-icon-action {
+    align-items: center;
+    background: rgba(95, 107, 119, 0.12);
+    border-radius: 999px;
+    color: var(--lh-muted, #5f6b77);
+    display: inline-flex;
+    height: 2.25rem;
+    justify-content: center;
+    text-decoration: none;
+    width: 2.25rem;
+}
+
+.webservice-elediamcp-icon-action:hover,
+.webservice-elediamcp-icon-action:focus {
+    color: var(--lh-primary, #194866);
+    text-decoration: none;
+}
+
+.webservice-elediamcp-icon-action--danger {
+    background: rgba(var(--webservice-elediamcp-danger-rgb), 0.1);
+    color: var(--webservice-elediamcp-danger);
+}
+
+.webservice-elediamcp-icon-action--danger:hover,
+.webservice-elediamcp-icon-action--danger:focus {
+    background: rgba(var(--webservice-elediamcp-danger-rgb), 0.16);
+    color: var(--webservice-elediamcp-danger-hover);
+}
+
+.webservice-elediamcp-icon-action .sr-only {
+    border: 0;
+    clip: rect(0, 0, 0, 0);
+    height: 1px;
+    margin: -1px;
+    overflow: hidden;
+    padding: 0;
+    position: absolute;
+    white-space: nowrap;
+    width: 1px;
+}
+
+.webservice-elediamcp-token-card .generaltable {
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 0.84rem;
+    margin: 0;
+    width: 100%;
+}
+
+.webservice-elediamcp-token-card .generaltable th,
+.webservice-elediamcp-token-card .generaltable td {
+    border-bottom: 1px solid rgba(219, 231, 238, 0.78);
+    padding: 0.8rem 1rem;
+    vertical-align: middle;
+}
+
+.webservice-elediamcp-token-card .generaltable th {
+    background: rgba(248, 251, 253, 0.82);
+    color: var(--lh-text, #1f2937);
+    font-weight: 800;
+}
+
+.webservice-elediamcp-token-card .generaltable tr:last-child td {
+    border-bottom: 0;
+}
+
+.webservice-elediamcp-token-card .generaltable .btn-sm {
+    border-radius: var(--lh-radius-sm, 8px);
+    font-size: 0.78rem;
+    padding: 0.3rem 0.65rem;
+}
+
+.webservice-elediamcp-token-card form.mform {
+    margin: 0;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem,
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .form-group,
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .mb-3 {
+    display: grid !important;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fdescription.required {
+    display: none;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem_actionbuttons {
+    border-bottom: 0;
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-start;
+    margin: 0;
+    padding-left: 15.5rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fgroup_id_buttonar {
+    border-bottom: 0;
+    padding-top: 0.95rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fgroup_id_buttonar .felement {
+    grid-column: 2;
+    padding-left: 0;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fgroup_id_buttonar .d-flex {
+    gap: 0.35rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fgroup_id_buttonar .felement .fitem {
+    border-bottom: 0;
+    display: block !important;
+    padding: 0;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .felement {
+    align-items: center !important;
+    display: flex !important;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil fieldset {
+    max-width: 100%;
+    width: 100%;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector {
+    align-items: center;
+    display: flex !important;
+    flex-wrap: wrap;
+    font-size: 0;
+    gap: 0.55rem 1rem;
+    max-width: 100%;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > .fitem,
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > label.fitem {
+    border: 0;
+    display: block !important;
+    margin: 0;
+    padding: 0;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > * {
+    font-size: 0.9rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > label.form-check.fitem,
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil label.form-check {
+    align-items: center;
+    background: transparent;
+    border: 0;
+    border-radius: 0;
+    color: var(--bs-body-color, var(--lh-text, #1f2937));
+    display: inline-flex !important;
+    font-family: var(--bs-body-font-family, inherit);
+    font-size: var(--bs-body-font-size, 1rem);
+    font-weight: 400;
+    gap: 0.5rem;
+    line-height: 1.5;
+    min-height: 2.4rem;
+    min-width: 7.2rem;
+    padding: 0;
+    white-space: nowrap;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .form-check-input {
+    flex: 0 0 auto;
+    height: 1rem;
+    margin: 0;
+    width: 1rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil select {
+    min-width: auto;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #id_validuntil_day {
+    width: 4.8rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #id_validuntil_month {
+    width: 8rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #id_validuntil_year {
+    width: 6.2rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem_actionbuttons .felement {
+    grid-column: 2;
+    padding-left: 0;
+}
+
+.webservice-elediamcp-guide-card {
+    color: var(--lh-muted, #5f6b77);
+    font-size: 0.86rem;
+    line-height: 1.5;
+    padding: 1rem;
+}
+
+.webservice-elediamcp-guide-card p:last-child,
+.webservice-elediamcp-guide-card div:last-child,
+.webservice-elediamcp-guide-card pre:last-child {
+    margin-bottom: 0;
+}
+
+.webservice-elediamcp-guide-card pre {
+    background: rgba(248, 251, 253, 0.94) !important;
+    border-color: var(--lh-border, #dbe7ee) !important;
+    border-radius: var(--lh-radius-sm, 8px) !important;
+    color: var(--lh-text, #1f2937);
+    font-size: 0.78rem;
+    line-height: 1.45;
+    margin: 0.45rem 0 0.55rem;
+}
+
+#page-webservice-elediamcp-configuration .fdescription.required,
+#page-webservice-elediamcp-configuration .collapsible-actions {
+    display: none;
+}
+
+#page-webservice-elediamcp-configuration .fitem_actionbuttons {
+    display: flex;
+    gap: 0.35rem;
+    justify-content: flex-start;
+    margin: 0;
+    padding-left: 15.5rem;
+}
+
+#page-webservice-elediamcp-configuration .webservice-elediamcp-card .fitem_actionbuttons {
+    border-bottom: 0;
+    padding-bottom: 1rem;
+    padding-top: 0.85rem;
+}
+
+#page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) {
+    align-items: center !important;
+    display: flex !important;
+    gap: 0.5rem;
+}
+
+#page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) > .w-100 {
+    width: auto !important;
+}
+
+#page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) .fitem {
+    border-bottom: 0;
+    display: block;
+    padding: 0;
+}
+
+@media (max-width: 700px) {
+    .webservice-elediamcp-card .fitem,
+    .webservice-elediamcp-card .form-group,
+    .webservice-elediamcp-card .mb-3 {
+        display: block;
+    }
+
+    .webservice-elediamcp-card .femptylabel {
+        margin-top: 0;
+    }
+
+    #page-webservice-elediamcp-configuration .fitem_actionbuttons {
+        padding-left: 0;
+    }
+
+    #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem_actionbuttons {
+        padding-left: 1rem;
+    }
+
+    #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem,
+    #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .form-group,
+    #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .mb-3 {
+        display: block !important;
+    }
+}

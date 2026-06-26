@@ -18,7 +18,6 @@ declare(strict_types=1);
 
 namespace webservice_elediamcp\local;
 
-use context_system;
 use core_external\external_api;
 use core_external\external_description;
 use core_external\external_multiple_structure;
@@ -56,7 +55,7 @@ class server extends webservice_base_server {
     public const SERVER_NAME = 'Moodle MCP Server';
 
     /** @var string Server semantic version advertised in serverInfo. */
-    public const SERVER_VERSION = '0.8.0';
+    public const SERVER_VERSION = '1.0.0';
 
     /** @var string HTTP request method. */
     protected string $httpmethod = 'GET';
@@ -150,19 +149,13 @@ class server extends webservice_base_server {
     }
 
     /**
-     * Enforce webservice/elediamcp:use, but soft-fail through to the parent's
-     * service-specific permission checks when the capability is not granted.
-     *
-     * The capability is new in 0.5.0 and is granted to the 'user' archetype by
-     * default. Sites that upgrade from 0.4.x without re-running role evaluation
-     * may not have the capability resolved yet — in that case we fall back to
-     * Moodle's existing service membership checks, which already gate the same
-     * access we would otherwise enforce here.
+     * Enforce webservice/elediamcp:use before handling MCP requests.
      *
      * @return void
+     * @throws \core\exception\required_capability_exception
      */
     protected function require_mcp_capability(): void {
-        $context = context_system::instance();
+        $context = \core\context\system::instance();
         if (has_capability('webservice/elediamcp:use', $context, $this->userid ?: null)) {
             return;
         }
@@ -170,11 +163,11 @@ class server extends webservice_base_server {
         if (!empty($this->userid) && is_siteadmin($this->userid)) {
             return;
         }
-        debugging(
-            'webservice/elediamcp:use capability not granted to user ' . ($this->userid ?? '?')
-                . ' — relying on Moodle service membership checks. '
-                . 'Re-run /admin/index.php to refresh role capabilities.',
-            DEBUG_DEVELOPER
+        throw new \core\exception\required_capability_exception(
+            $context,
+            'webservice/elediamcp:use',
+            'nopermissions',
+            'error'
         );
     }
 
@@ -198,8 +191,9 @@ class server extends webservice_base_server {
 
         $this->token = $this->extract_token();
 
-        if ($this->httpmethod === 'POST' && !request::is_raw_input_empty()) {
-            $this->mcprequest = request::from_raw_input();
+        $rawbody = $this->httpmethod === 'POST' ? file_get_contents('php://input') : '';
+        if ($this->httpmethod === 'POST' && $rawbody !== false && $rawbody !== '') {
+            $this->mcprequest = request::from_string($rawbody);
             if ($this->is_tool_call()) {
                 $this->extract_tool_call();
             }
@@ -221,7 +215,7 @@ class server extends webservice_base_server {
      * @return void
      * @throws moodle_exception If the tool name is missing.
      */
-    public function extract_tool_call(): void {
+    protected function extract_tool_call(): void {
         if (empty($this->mcprequest->params) || empty($this->mcprequest->params['name'])) {
             throw new moodle_exception('err_missing_tool_name', 'webservice_elediamcp');
         }
@@ -945,7 +939,9 @@ class server extends webservice_base_server {
         $cors = security::resolve_cors_origin($this->origin);
         if ($cors !== null) {
             header('Access-Control-Allow-Origin: ' . $cors);
-            header('Access-Control-Allow-Credentials: true');
+            if (security::cors_allows_credentials($this->origin)) {
+                header('Access-Control-Allow-Credentials: true');
+            }
             header('Access-Control-Expose-Headers: Mcp-Session-Id, Mcp-Protocol-Version, Retry-After, WWW-Authenticate');
         }
         header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With, '
@@ -969,7 +965,7 @@ class server extends webservice_base_server {
             $userid = (int) ($this->userid ?? 0);
 
             $event = tool_invoked::create([
-                'context' => context_system::instance(),
+                'context' => \core\context\system::instance(),
                 'userid' => $userid > 0 ? $userid : 0,
                 'other' => [
                     'toolname' => $toolname,
@@ -984,7 +980,7 @@ class server extends webservice_base_server {
 
             if (!$iserror && $this->is_write_tool($toolname, $aitool)) {
                 $write = write_performed::create([
-                    'context' => context_system::instance(),
+                    'context' => \core\context\system::instance(),
                     'userid' => $userid > 0 ? $userid : 0,
                     'other' => ['toolname' => $toolname],
                 ]);

@@ -443,7 +443,7 @@ Releases bündeln eine Menge fertiger Features zu einem versionierten Stand.
 - ID-Format: `relXX` (oder semantisch `R1.2`, `R1.3`, …)
 - Ein Release ist erst freigegeben, wenn **alle enthaltenen Features den Done-Kriterien aus `00-master.md` §6** entsprechen.
 - Release-Freigabe ist eine Mensch-only-Befugnis (PO).
-- Nach Freigabe: Tag im Repo (`vX.Y`), Eintrag im jeweiligen `Playbooks/`-Dokument für Release-Mechanik.
+- Nach Freigabe: Tag im Repo (`vX.Y`) und Release-Mechanik in `03-dev-doc.md` dokumentieren.
 
 ### Release-Vorlage
 

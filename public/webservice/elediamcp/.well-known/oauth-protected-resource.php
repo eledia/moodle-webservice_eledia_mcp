@@ -50,7 +50,7 @@ $metadata = [
         // To be populated when the in-Moodle OAuth issuer is implemented.
     ],
     'bearer_methods_supported' => ['header'],
-    'resource_documentation' => $CFG->wwwroot . '/webservice/elediamcp/README.md',
+    'resource_documentation' => $CFG->wwwroot . '/webservice/elediamcp/configuration.php',
     'scopes_supported' => [
         'mcp:tools.read',
         'mcp:tools.call',

@@ -54,6 +54,33 @@ final class server_test extends advanced_testcase {
     }
 
     /**
+     * Users without webservice/elediamcp:use are denied before MCP handling.
+     */
+    public function test_require_mcp_capability_denies_user_without_capability(): void {
+        global $DB;
+
+        $this->resetAfterTest(true);
+
+        $user = $this->getDataGenerator()->create_user();
+        $context = \core\context\system::instance();
+        $userroleid = (int) $DB->get_field('role', 'id', ['shortname' => 'user'], MUST_EXIST);
+        assign_capability('webservice/elediamcp:use', CAP_PROHIBIT, $userroleid, $context->id, true);
+        accesslib_clear_all_caches_for_unit_testing();
+
+        $server = new server(WEBSERVICE_AUTHMETHOD_PERMANENT_TOKEN);
+        $reflection = new ReflectionClass($server);
+        $useridprop = $reflection->getProperty('userid');
+        $useridprop->setAccessible(true);
+        $useridprop->setValue($server, $user->id);
+
+        $method = $reflection->getMethod('require_mcp_capability');
+        $method->setAccessible(true);
+
+        $this->expectException(\core\exception\required_capability_exception::class);
+        $method->invoke($server);
+    }
+
+    /**
      * Test is_tool_call method with tools/call request.
      */
     public function test_is_tool_call_true(): void {
@@ -139,7 +166,9 @@ final class server_test extends advanced_testcase {
         $mcprequestprop->setValue($server, $request);
 
         // Call extract_tool_call.
-        $server->extract_tool_call();
+        $method = $reflection->getMethod('extract_tool_call');
+        $method->setAccessible(true);
+        $method->invoke($server);
 
         // Verify functionname was set.
         $functionnameprop = $reflection->getProperty('functionname');
@@ -182,7 +211,9 @@ final class server_test extends advanced_testcase {
         $this->expectException(moodle_exception::class);
         $this->expectExceptionMessage(get_string('err_missing_tool_name', 'webservice_elediamcp'));
 
-        $server->extract_tool_call();
+        $method = $reflection->getMethod('extract_tool_call');
+        $method->setAccessible(true);
+        $method->invoke($server);
     }
 
     /**

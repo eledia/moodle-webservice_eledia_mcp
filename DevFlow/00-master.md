@@ -20,9 +20,8 @@
 2. `04-tasks.md` lesen — hier ist der operative Stand
 3. Offene Tasks (`taskXX`) und offene Klärungen (`qXX`) identifizieren
 4. Relevante Features in `01-features.md` lesen
-5. Bei Moodle-Themen: `Skills/moodle-framework.md` konsultieren (siehe §11)
-6. Mit dem Task höchster Priorität beginnen
-7. Bei Unklarheit → **nicht raten**, sondern als `qXX` in `04-tasks.md` eintragen
+5. Mit dem Task höchster Priorität beginnen
+6. Bei Unklarheit → **nicht raten**, sondern als `qXX` in `04-tasks.md` eintragen
 
 ---
 
@@ -35,9 +34,6 @@
 | `03-dev-doc.md` | Technische Implementierung (Ist-Zustand) |
 | `04-tasks.md` | Tasks, Klärungen, operatives Tagesgeschäft |
 | `05-quality.md` | Bugs (mit Severity) und Tests |
-| `Skills/` | Generisches, projektübergreifendes Framework-Wissen |
-| `Playbooks/` | Projekt-spezifische Deploy- und Release-Abläufe |
-| `examples/` | Anschauungsmaterial — kein Live-Stand |
 
 ---
 
@@ -196,24 +192,14 @@ ADRs leben **inline in diesem Master-Dokument**, nicht in separaten Dateien. Vor
 - **Status:** beschlossen
 - **Kontext:** Architektur-Entscheidungen müssen festgehalten werden, ohne ein viertes Doku-Silo aufzumachen.
 - **Optionen:**
-  - A) eigener `decisions/`-Ordner mit ADR-Files (klassischer ADR-Pattern)
-  - B) Inline im Master-Doc
-  - C) als Sektion in `03-dev-doc.md`
-- **Entscheidung:** B — inline im Master.
+  - A) Inline im Master-Doc
+  - B) als Sektion in `03-dev-doc.md`
+- **Entscheidung:** A — inline im Master.
 - **Konsequenzen:** Master wird länger, dafür ist der Eintrittspunkt einer. ADRs sind nicht versteckt. Risiko: bei sehr vielen ADRs muss eventuell auf Variante A migriert werden.
 
 ---
 
-## 11. 📅 Stand der Skills
-
-Generisches Framework-Wissen lebt in `Skills/`. Dort wird **mit Datum dokumentiert**, gegen welche Version eines externen Standards (Moodle-Core, Design System, BFSG-Normen) der Skill aktuell ist.
-
-- Aktueller Stand: siehe `Skills/README.md` → Sektion „Stand"
-- Bei Drift zwischen Skill und Projektkontext: Prompt **`#refresh`** (siehe §12)
-
----
-
-## 12. 🤖 Prompt-Shortcuts
+## 11. 🤖 Prompt-Shortcuts
 
 Diese Prompts steuern KI-Verhalten in strukturierter Form. Verwendung direkt im Chat mit der KI.
 
@@ -340,18 +326,7 @@ Bewerte eine Lösung:
 
 ---
 
-### #refresh
-
-Prüfe, ob das in `Skills/` hinterlegte Framework-Wissen noch zum aktuellen Projektkontext passt. Konkret:
-- Skill-Stand (Datum, Versionen) gegen tatsächliche Projekt-Versionen abgleichen (z. B. `package.json`, `composer.json`, Moodle-Core-Version)
-- Drift flaggen (z. B. „Skill sagt MDS v2.1.1, Projekt zieht 2.0.4")
-- Vorschlagen, welche Skills aktualisiert oder welche Migration eingeplant werden sollte
-
-Output: Liste „Skill X — Drift gegenüber Projekt: …" plus Empfehlung.
-
----
-
-## 13. 📌 Nutzungshinweise
+## 12. 📌 Nutzungshinweise
 
 - Prompts direkt in KI-Chats einsetzen
 - Immer mit IDs arbeiten (`featXX`, `taskXX`, …)
@@ -360,7 +335,7 @@ Output: Liste „Skill X — Drift gegenüber Projekt: …" plus Empfehlung.
 
 ---
 
-## 14. 🚀 Empfohlener Tagesablauf
+## 13. 🚀 Empfohlener Tagesablauf
 
 1. `#status`
 2. `#next`

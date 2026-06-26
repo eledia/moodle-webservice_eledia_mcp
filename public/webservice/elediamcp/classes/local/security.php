@@ -76,7 +76,7 @@ class security {
      * @return bool
      */
     public static function expose_raw_functions(): bool {
-        return (int) self::get_config('expose_raw_functions', 1) === 1;
+        return (int) self::get_config('expose_raw_functions', 0) === 1;
     }
 
     /**
@@ -112,6 +112,28 @@ class security {
             }
         }
         return null;
+    }
+
+    /**
+     * Determine whether credentialed CORS should be permitted for an origin.
+     *
+     * Wildcard CORS intentionally does not allow credentials, even though the
+     * origin is reflected back to keep non-credentialed browser clients working.
+     *
+     * @param string|null $origin The incoming Origin header value.
+     * @return bool True if Access-Control-Allow-Credentials may be emitted.
+     */
+    public static function cors_allows_credentials(?string $origin): bool {
+        if ($origin === null || $origin === '') {
+            return false;
+        }
+        $normalised = strtolower(rtrim($origin, '/'));
+        foreach (self::allowed_origins() as $entry) {
+            if ($entry === $normalised) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -160,7 +182,10 @@ class security {
      * Returns a snapshot containing whether the request is allowed and the
      * number of seconds until the window resets. Counters are kept in the
      * Moodle Application cache (configurable as a Redis/Memcached store in
-     * production deployments).
+     * production deployments). The application-cache increment is intentionally
+     * lightweight and is not guaranteed to be atomic on every cache backend; use
+     * a shared atomic cache store such as Redis for stricter production limits.
+     * Rejected requests still advance the current window counters.
      *
      * @param string $key Stable identifier (see rate_limit_key()).
      * @return array{allowed: bool, retry_after: int, remaining_minute: int, remaining_hour: int}

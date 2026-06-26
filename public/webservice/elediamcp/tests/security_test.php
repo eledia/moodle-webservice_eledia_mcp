@@ -68,10 +68,15 @@ final class security_test extends advanced_testcase {
     public function test_origin_wildcard(): void {
         set_config('allowed_origins', '*', 'webservice_elediamcp');
         $this->assertTrue(security::is_origin_allowed('https://anywhere.example.org'));
+        $this->assertFalse(security::cors_allows_credentials('https://anywhere.example.org'));
         $this->assertSame(
             'https://anywhere.example.org',
             security::resolve_cors_origin('https://anywhere.example.org')
         );
+
+        set_config('allowed_origins', "https://app.example.com\n*", 'webservice_elediamcp');
+        $this->assertTrue(security::cors_allows_credentials('https://app.example.com'));
+        $this->assertFalse(security::cors_allows_credentials('https://anywhere.example.org'));
     }
 
     /**
@@ -100,6 +105,7 @@ final class security_test extends advanced_testcase {
         set_config('allow_token_in_query', 1, 'webservice_elediamcp');
         $this->assertTrue(security::allow_token_in_query());
 
+        $this->assertFalse(security::expose_raw_functions());
         set_config('expose_raw_functions', 0, 'webservice_elediamcp');
         $this->assertFalse(security::expose_raw_functions());
         set_config('expose_raw_functions', 1, 'webservice_elediamcp');

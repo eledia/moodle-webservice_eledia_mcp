@@ -111,8 +111,18 @@ class request {
      */
     public static function from_raw_input(): self {
         $raw = file_get_contents('php://input');
+        return self::from_string($raw === false ? '' : $raw);
+    }
 
-        if ($raw === false || $raw === '') {
+    /**
+     * Create an MCP request object from a raw JSON string.
+     *
+     * @param string $raw Raw JSON request body.
+     * @return self A validated request instance.
+     * @throws moodle_exception If the body is empty, JSON decoding fails, or the request format is invalid.
+     */
+    public static function from_string(string $raw): self {
+        if ($raw === '') {
             throw new moodle_exception(
                 'err_empty_request',
                 'webservice_elediamcp',

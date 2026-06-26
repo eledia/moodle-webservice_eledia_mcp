@@ -217,6 +217,9 @@ class moodle_search_content implements ai_tool {
      * @return array<string, mixed>
      */
     private static function global_search(string $query, int $courseid, int $limit): array {
+        // core_search\manager::search() accepts a stdClass with the same fields
+        // as the search form data object. This mirrors Moodle's internal search
+        // form payload without depending on UI form classes.
         $formdata = new stdClass();
         $formdata->q = $query;
         if ($courseid > 0) {

@@ -162,6 +162,14 @@ class provider implements
         if (!$context instanceof context_system) {
             return;
         }
+        $externaltokenids = array_filter(array_map('intval', $DB->get_fieldset_select(
+            'webservice_elediamcp_token',
+            'externaltokenid',
+            'externaltokenid IS NOT NULL'
+        )));
+        if (!empty($externaltokenids)) {
+            $DB->delete_records_list('external_tokens', 'id', $externaltokenids);
+        }
         $DB->delete_records('webservice_elediamcp_token');
     }
 
@@ -206,6 +214,15 @@ class provider implements
      * @return void
      */
     protected static function erase_user(\moodle_database $db, int $userid): void {
+        $externaltokenids = array_filter(array_map('intval', $db->get_fieldset_select(
+            'webservice_elediamcp_token',
+            'externaltokenid',
+            'userid = :userid AND externaltokenid IS NOT NULL',
+            ['userid' => $userid]
+        )));
+        if (!empty($externaltokenids)) {
+            $db->delete_records_list('external_tokens', 'id', $externaltokenids);
+        }
         $db->delete_records('webservice_elediamcp_token', ['userid' => $userid]);
         $db->set_field('webservice_elediamcp_token', 'creatorid', 0, ['creatorid' => $userid]);
         $db->set_field_select('webservice_elediamcp_token', 'revokedby', null, 'revokedby = :userid',

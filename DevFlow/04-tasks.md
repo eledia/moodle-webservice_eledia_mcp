@@ -420,8 +420,8 @@ mit Test-Skelett im owning Plugin starten.
 - Library-PHPUnit-Tests liegen unter `plugins/local_lernhive_contenthub/tests/library/`.
 - Library-Behat-Tests liegen unter `plugins/local_lernhive_contenthub/tests/behat/`.
 - Alte Plugin-Ordner `local_lernhive_copy` und `local_eledia_library` sind entfernt.
-- Der einzige DevFlow für Copy, Template und Library ist
-  `plugins/local_lernhive_contenthub/docs/`.
+- Der einzige DevFlow für Copy, Template und Library liegt beim owning Plugin
+  `local_lernhive_contenthub`.
 
 ---
 

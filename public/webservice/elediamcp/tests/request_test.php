@@ -220,4 +220,32 @@ final class request_test extends advanced_testcase {
         $this->assertIsArray($request->params['arguments']);
         $this->assertEquals('value1', $request->params['arguments']['param1']);
     }
+
+    /**
+     * Test request construction from a raw JSON string.
+     */
+    public function test_from_string(): void {
+        $this->resetAfterTest(true);
+
+        $request = request::from_string(json_encode([
+            'jsonrpc' => '2.0',
+            'method' => 'tools/list',
+            'id' => 42,
+        ]));
+
+        $this->assertSame('2.0', $request->jsonrpc);
+        $this->assertSame('tools/list', $request->method);
+        $this->assertSame(42, $request->id);
+    }
+
+    /**
+     * Test request construction from an empty raw JSON string.
+     */
+    public function test_from_string_rejects_empty_body(): void {
+        $this->resetAfterTest(true);
+
+        $this->expectException(moodle_exception::class);
+        $this->expectExceptionMessage('Request body is empty');
+        request::from_string('');
+    }
 }

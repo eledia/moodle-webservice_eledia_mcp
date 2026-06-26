@@ -20,6 +20,8 @@ namespace webservice_elediamcp\local\ai;
 
 use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
 use webservice_elediamcp\local\ai\tools\moodle_course_contents;
+use webservice_elediamcp\local\ai\tools\moodle_create_course;
+use webservice_elediamcp\local\ai\tools\moodle_create_user;
 use webservice_elediamcp\local\ai\tools\moodle_find_user;
 use webservice_elediamcp\local\ai\tools\moodle_forum_discussions;
 use webservice_elediamcp\local\ai\tools\moodle_get_announcements;
@@ -84,6 +86,8 @@ class registry {
             moodle_my_submission_files::class,
             // Write tools (require confirm).
             moodle_send_message::class,
+            moodle_create_user::class,
+            moodle_create_course::class,
         ];
     }
 
