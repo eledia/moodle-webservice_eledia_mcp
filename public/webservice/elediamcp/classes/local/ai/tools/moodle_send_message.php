@@ -466,8 +466,8 @@ class moodle_send_message implements ai_tool {
      */
     private static function build_preview(string $message): string {
         $oneline = preg_replace('/\s+/', ' ', $message);
-        if (strlen($oneline) > 120) {
-            return substr($oneline, 0, 117) . '...';
+        if (\core_text::strlen($oneline) > 120) {
+            return \core_text::substr($oneline, 0, 117) . '...';
         }
         return $oneline;
     }

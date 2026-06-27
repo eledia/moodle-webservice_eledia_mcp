@@ -366,8 +366,8 @@ class moodle_my_grades implements ai_tool {
         if ($plain === '') {
             return '';
         }
-        if (strlen($plain) > 300) {
-            $plain = substr($plain, 0, 297) . '...';
+        if (\core_text::strlen($plain) > 300) {
+            $plain = \core_text::substr($plain, 0, 297) . '...';
         }
         return $plain;
     }

@@ -250,6 +250,56 @@ history on each page load.
 
 ---
 
+### webservice_elediamcp MCP server (`feat51`)
+
+**Überblick**
+Moodle-Webservice-Protokoll-Plugin, das MCP (JSON-RPC 2.0 über Streamable HTTP)
+implementiert und eine kuratierte, LLM-freundliche AI-Tool-Fläche über die
+Moodle-External-Functions legt. Läuft als PHP-Code innerhalb von Moodle; Tools
+werden mit dem authentifizierten `$USER` ausgeführt (kein Service-Account),
+sodass Capability-/Sichtbarkeitsprüfungen des Core greifen.
+
+---
+
+**Architektur**
+
+- `server.php` → Entry-Point; instanziiert `\webservice_elediamcp\local\server`.
+- `classes/local/server.php` → JSON-RPC-Lifecycle (`initialize`, `tools/list`,
+  `tools/call`, …), CORS/Origin, Rate-Limit, Emergency-Disable, Audit-Events.
+  Override `authenticate_user()` ruft `parent::authenticate_user()` und erzwingt
+  bei `enforce_mcp_service` (Default an), dass `restricted_serviceid` zu einem
+  konfigurierten MCP-Service gehört (`token_manager::is_mcp_service()`). Deckt
+  alle Pfade ab (MCP-Methoden, AI-Tools, Raw-Functions via `parent::run()`).
+- `classes/local/security.php` → Konfig-Lookups, Origin/CORS, Rate-Limit,
+  `enforce_mcp_service()`.
+- `classes/local/tool_provider.php` + `ai/registry.php` → Tool-Katalog
+  (AI-native Tools immer verfügbar; Raw-Functions nur service-scoped bei
+  `expose_raw_functions`).
+- `classes/local/ai/tools/*` → 19 kuratierte Tools; jedes prüft Capability mit
+  expliziter Nutzer-ID und scopt auf den authentifizierten Nutzer.
+- `classes/local/token_manager.php` + `classes/api.php` → MCP-Token-Lifecycle und
+  interne Provisioning-API; Metadaten in `{webservice_elediamcp_token}`.
+
+---
+
+**Komponenten / Einstellungen (Auszug)**
+
+- `enforce_mcp_service` (Default 1) → Endpoint nur für MCP-Service-Tokens.
+- `expose_raw_functions` (Default 0), `allow_token_in_query` (Default 0),
+  `allowed_origins`, Rate-Limits, `max_request_size`, `emergency_disable`.
+
+---
+
+**Constraints / Einschränkungen**
+
+- Rate-Limiter nutzt die Application-Cache; nicht garantiert atomar (M-3 →
+  Redis-Store für strikte Limits).
+- Offene Discovery-/Browsing-Punkte: bug45 (`moodle_find_user`),
+  bug46 (`moodle_search_courses` / fehlendes `moodle_list_courses`).
+- PHPUnit/Behat in CI ausführen; lokal keine Moodle-PHPUnit-Umgebung verfügbar.
+
+---
+
 ## Feature-Vorlage
 
 ---

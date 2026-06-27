@@ -83,7 +83,9 @@ class moodle_find_user implements ai_tool {
             . 'authenticated user is allowed to message. Use this BEFORE moodle_send_message '
             . 'whenever the user is identified only by first name, partial name or nickname. '
             . 'Results are split into two buckets: existing contacts and non-contacts that '
-            . 'are still messageable under the site\'s messaging-privacy rules. Each match '
+            . 'are still messageable under the site\'s messaging-privacy rules. Callers with '
+            . 'site-wide messaging rights (e.g. administrators) also find users without a '
+            . 'shared course, matching exactly who moodle_send_message can reach. Each match '
             . 'includes the user id you must pass to moodle_send_message as to_user_id. '
             . 'Read-only and safe to call eagerly.';
     }
@@ -220,6 +222,26 @@ class moodle_find_user implements ai_tool {
         $contactsout = array_map([self::class, 'normalise_match'], (array) $contacts);
         $noncontactsout = array_map([self::class, 'normalise_match'], (array) $noncontacts);
 
+        // Admin-aware fallback: the messaging search hides non-contacts without a
+        // shared course, so users who ARE reachable via moodle_send_message can be
+        // invisible here. When the caller may message any user (site admin or
+        // moodle/site:sendmessage), surface every matching, still-messageable user.
+        // Non-messageable users stay filtered out (each candidate is re-checked via
+        // can_send_message), so non-privileged callers are unaffected.
+        if (self::can_message_anyone($user, $userid)) {
+            $seen = [];
+            foreach ($contactsout as $c) {
+                $seen[(int) $c['id']] = true;
+            }
+            foreach ($noncontactsout as $c) {
+                $seen[(int) $c['id']] = true;
+            }
+            $extra = self::privileged_search($userid, $query, $limit, $seen);
+            if (!empty($extra)) {
+                $noncontactsout = array_slice(array_merge($noncontactsout, $extra), 0, $limit);
+            }
+        }
+
         $total = count($contactsout) + count($noncontactsout);
 
         $payload = [
@@ -269,6 +291,94 @@ class moodle_find_user implements ai_tool {
             'is_online' => isset($member->isonline) ? (bool) $member->isonline : null,
             'is_blocked' => !empty($member->isblocked),
         ];
+    }
+
+    /**
+     * Whether the caller may message any user on the site.
+     *
+     * Site admins and holders of moodle/site:sendmessage can message anyone, so
+     * discovery should match what {@see moodle_send_message} can actually reach.
+     *
+     * @param stdClass $user Authenticated user record.
+     * @param int $userid Authenticated user id.
+     * @return bool
+     */
+    private static function can_message_anyone(stdClass $user, int $userid): bool {
+        if (is_siteadmin($user)) {
+            return true;
+        }
+        return has_capability('moodle/site:sendmessage', \context_system::instance(), $userid);
+    }
+
+    /**
+     * Direct name search over the user table for privileged callers.
+     *
+     * Matches each whitespace-separated token against the first or last name
+     * (so "Paul Maier" resolves across the two fields) plus a full-name match,
+     * then keeps only users the caller is actually allowed to message.
+     *
+     * @param int $userid Authenticated (sending) user id.
+     * @param string $query Raw name fragment.
+     * @param int $limit Maximum number of matches to return.
+     * @param array<int, bool> $excludeids Ids already present in another bucket.
+     * @return array<int, array<string, mixed>> Normalised match entries.
+     */
+    private static function privileged_search(int $userid, string $query, int $limit, array $excludeids): array {
+        global $DB;
+
+        $tokens = preg_split('/\s+/', $query, -1, PREG_SPLIT_NO_EMPTY) ?: [];
+        if (empty($tokens)) {
+            return [];
+        }
+
+        $where = ['u.deleted = 0', 'u.suspended = 0', 'u.confirmed = 1', 'u.id <> :selfid', 'u.id <> :guestid'];
+        $params = ['selfid' => $userid, 'guestid' => (int) (guest_user()->id ?? 0)];
+
+        $nameconds = [];
+        foreach ($tokens as $i => $token) {
+            $fn = $DB->sql_like('u.firstname', ":tokfn{$i}", false);
+            $ln = $DB->sql_like('u.lastname', ":tokln{$i}", false);
+            $nameconds[] = "($fn OR $ln)";
+            $params["tokfn{$i}"] = '%' . $DB->sql_like_escape($token) . '%';
+            $params["tokln{$i}"] = '%' . $DB->sql_like_escape($token) . '%';
+        }
+        $fullname = $DB->sql_concat('u.firstname', "' '", 'u.lastname');
+        $fullcond = $DB->sql_like($fullname, ':fullq', false);
+        $params['fullq'] = '%' . $DB->sql_like_escape($query) . '%';
+        $where[] = '((' . implode(' AND ', $nameconds) . ') OR ' . $fullcond . ')';
+
+        if (!empty($excludeids)) {
+            [$notinsql, $exparams] = $DB->get_in_or_equal(array_keys($excludeids), SQL_PARAMS_NAMED, 'ex', false);
+            $where[] = "u.id $notinsql";
+            $params += $exparams;
+        }
+
+        $sql = 'SELECT u.id FROM {user} u WHERE ' . implode(' AND ', $where)
+            . ' ORDER BY u.lastname ASC, u.firstname ASC';
+        // Fetch a few more than needed because can_send_message() may drop some.
+        $candidateids = array_keys($DB->get_records_sql($sql, $params, 0, max($limit * 3, $limit)));
+
+        $sendable = [];
+        foreach ($candidateids as $cid) {
+            if (message_api::can_send_message((int) $cid, $userid)) {
+                $sendable[] = (int) $cid;
+            }
+            if (count($sendable) >= $limit) {
+                break;
+            }
+        }
+        if (empty($sendable)) {
+            return [];
+        }
+
+        $members = \core_message\helper::get_member_info($userid, $sendable);
+        $out = [];
+        foreach ($sendable as $cid) {
+            if (isset($members[$cid])) {
+                $out[] = self::normalise_match($members[$cid]);
+            }
+        }
+        return $out;
     }
 
     /**

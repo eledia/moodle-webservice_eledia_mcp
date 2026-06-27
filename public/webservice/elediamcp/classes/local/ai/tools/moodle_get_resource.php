@@ -437,10 +437,10 @@ class moodle_get_resource implements ai_tool {
      * @return array{0:string,1:bool} Tuple of truncated text and truncation flag.
      */
     private static function truncate(string $text, int $max): array {
-        if (strlen($text) <= $max) {
+        if (\core_text::strlen($text) <= $max) {
             return [$text, false];
         }
-        return [substr($text, 0, max(0, $max - 3)) . '...', true];
+        return [\core_text::substr($text, 0, max(0, $max - 3)) . '...', true];
     }
 
     /**

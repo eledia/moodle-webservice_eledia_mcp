@@ -137,6 +137,78 @@ Moodle developer debugging enabled; Pathways notifications active.
 
 ---
 
+### bug45 moodle_find_user: Discovery strenger als der Sende-Pfad
+Feature:  webservice_elediamcp
+Severity: S3
+Status:   fixed
+Linked:   task52, review54, review55
+
+**Beschreibung**
+`moodle_find_user` findet existierende, sendbare Nutzer nicht. Das Tool nutzt
+`\core_message\api::message_search_users()` (Rückgabe als `contacts` /
+`noncontacts`). Der noncontacts-Zweig filtert Nicht-Kontakte ohne gemeinsamen
+Kurs heraus (außer `$CFG->messagingallusers`). Der Action-Pfad
+`moodle_send_message` per `to_user_id` prüft dagegen nur `can_send_message()` /
+`moodle/site:sendmessage`. Daraus folgt eine Asymmetrie: per ID sendbar, aber
+nicht auffindbar.
+
+**Reproduktion**
+1. Admin-Token (User-ID 2, keine Einschreibungen, kein Kontakt zu Ziel-User).
+2. `moodle_find_user(query="Paul")` / `"Maier"` / `"Paul Maier"` → 0 Treffer.
+3. `moodle_send_message(to_user_id=72)` → erfolgreich (Paul Maier, message_id 2).
+
+**Erwartet**
+Was per ID sendbar ist, ist auch auffindbar — oder zumindest mit einem klaren
+`messageable`-Flag annotiert. Keine Regression für nicht-privilegierte Token.
+
+**Tatsächlich**
+`total_matches: 0`, leere `contacts`/`noncontacts`-Buckets.
+
+**Fix-Ansatz**
+Admin-aware Fallback: Wenn der Token-User `is_siteadmin` ist bzw.
+`moodle/site:sendmessage` hält, nicht über die Messaging-Suche gehen, sondern
+über `core_user_get_users_by_field` / direkte `{user}`-Suche; Messageability
+optional per Flag annotieren. Zusätzlich Mehrwort-Namensmatching
+(`firstname`/`lastname` bzw. `CONCAT`). Umgebung: „eledia.ai Local Moodle"
+(Moodle 5.2.1, Docker, http://localhost:8080).
+
+---
+
+### bug46 moodle_search_courses: kein Katalog-Browsing (Handover-Fehldiagnose korrigiert)
+Feature:  webservice_elediamcp
+Severity: S3
+Status:   fixed
+Linked:   task53, review54, review55
+
+**Beschreibung**
+Handover meldete „0 Treffer, falsche API-Schicht (globale Volltextsuche)".
+Am Code verifiziert ist die Prämisse falsch: `moodle_search_courses` nutzt
+bereits `core_course_category::search_courses(['search' => $query], …)` — die
+Katalog-Such-API, **kein** `\core_search\manager`. `enrol_get_users_courses`
+dient nur dem Highlighting der eigenen Kurse, **nicht** als Ergebnisfilter.
+Sichtbarkeit (Admin sieht versteckte Kurse, Teilnehmer nur freigegebene) kommt
+korrekt über die Capabilities der Core-API.
+
+Die 0-Treffer im Handover-Test entstanden, weil die Suchbegriffe
+(`course`, `kurs`, `test`, `in`) nicht in den Kursnamen der Instanz vorkommen
+(„Welcome to Moodle", „Fragentypen", „Moodle Demo"). Ein Suchbegriff wie
+`moodle` hätte zwei Kurse geliefert.
+
+**Echte Lücke**
+„Wie viele Kurse habe ich / liste alle auf" ist Enumeration, nicht Suche; eine
+Such-API mit `MIN_QUERY = 2` kann das nicht beantworten. Es fehlt ein
+Browse-/List-Tool.
+
+**Fix-Ansatz**
+Neues Tool `moodle_list_courses` (paginiertes Katalog-Browsing ohne Query,
+z. B. `core_course_category::top()->get_courses(['recursive'=>true,…])`,
+Front-Page-Kurs id 1 ausgeschlossen, Capability-Sichtbarkeit). Optional
+`scope`-Parameter (`catalogue` | `enrolled`) in `moodle_search_courses`,
+ggf. Konsolidierung des `enrolled`-Pfads mit `moodle_my_courses`. Tool-
+Beschreibungen schärfen, damit das LLM Suchen vs. Browsen unterscheidet.
+
+---
+
 ## 🧪 Tests
 
 Jeder Test verweist auf ein Akzeptanzkriterium aus `01-features.md` und macht es prüfbar.
@@ -491,6 +563,139 @@ Die Handover-Notizen deckten sich mit dem Code-Review: keine akuten SQLi/XSS/SSR
 - `expose_raw_functions` hat einen sicheren Default für neue Installationen.
 - CORS-Wildcard/Credentials-Kombination ist entschärft.
 - Tote Ternär-/Kosmetikpunkte und Moodle-5.x-Kontextstil wurden bereinigt, soweit im aktuellen Diff relevant.
+
+---
+
+### review54 webservice_elediamcp Code-Review Runde 2 + Fixes
+Datum:   2026-06-27
+Branch:  review_johannes
+Typ:     Folge-Review mit Umsetzung
+Status:  fixed (Kernbefunde), 2 neue Bugs offen (bug45, bug46)
+
+**Gesamteinschätzung**
+Zweite, tiefere Review-Runde (Kern selbst gelesen, 18 Tools parallel geprüft).
+Kein Cross-User-/IDOR-Leak und keine SQL-Injection. Die als kritisch markierten
+Befunde aus review51 sind am Code als geschlossen verifiziert. Gefundene neue
+Befunde wurden umgesetzt; zwei Discovery-/Browsing-Themen aus Handovers sind als
+bug45/bug46 offen.
+
+**Befunde und Ergebnis**
+
+| ID | Schwere | Thema | Status |
+|---|---|---|---|
+| H-1 | hoch | `moodle_me` lieferte nie die E-Mail (fehlplatzierte `$email`-Zuweisung in `input_schema()`, undefiniert in `execute()`) | fixed |
+| H-2 | hoch | MCP-Endpoint akzeptierte jedes Webservice-Token, nicht nur MCP-Service-Tokens | fixed (Admin-Setting `enforce_mcp_service`, Default an) |
+| M-1 | mittel | `moodle_search_content` escapte `snippet` nicht (Inkonsistenz zu `title`) | fixed |
+| M-2 | mittel | `moodle_create_user` akzeptierte jedes installierte Auth-Plugin statt nur aktivierte | fixed |
+| M-3 | mittel | Rate-Limiter nicht atomar | fixed (MUC-Lock, review56) |
+| N-1 | niedrig | `moodle_course_contents` zeigte versteckte Sektion ohne `viewhiddenactivities` | fixed |
+| N-2 | niedrig | `moodle_get_announcements` ohne `uservisible`/Gruppen-Check auf News-Forum | fixed (review56) |
+| N-3 | niedrig | `moodle_forum_discussions` `discussion_count` nur über die paginierte Seite | fixed |
+| N-4 | niedrig | Interne Exception-Messages an Client (`search_courses`, `calendar_upcoming`) | fixed |
+| N-5 | niedrig | Toter Code `request::from_raw_input()` / `is_raw_input_empty()` | fixed |
+| N-6 | niedrig | Byte- statt Multibyte-Truncation in 8 Tools | fixed |
+
+**H-2 Umsetzung**
+Override `server::authenticate_user()` ruft `parent::authenticate_user()` und
+prüft danach `token_manager::is_mcp_service((int) $this->restricted_serviceid)`.
+Deckt alle Pfade ab (MCP-Methoden, AI-Tools, Raw-Functions via `parent::run()`).
+Steuerbar über neues Setting `enforce_mcp_service` (Default 1).
+
+**Neu aus Handovers (offen)**
+- bug45 `moodle_find_user`: Discovery strenger als Sende-Pfad → task52.
+- bug46 `moodle_search_courses`: Handover-Prämisse („global search") am Code
+  widerlegt; echte Lücke ist fehlendes Katalog-Browsing → task53.
+
+**Verifikation**
+- PHP-Syntaxprüfung aller geänderten Dateien: passed
+- `git diff --check`: passed
+- Versionssprung `2026061203`, CHANGELOG `1.0.1`
+- PHPUnit/Behat: not run (keine lokale Moodle-PHPUnit-Umgebung) — in CI nachziehen
+
+---
+
+### review55 webservice_elediamcp Discovery/Browsing-Fixes (bug45, bug46)
+Datum:   2026-06-27
+Branch:  review_johannes
+Typ:     Umsetzung Handover-Findings
+Status:  fixed
+
+**Gesamteinschätzung**
+Die beiden Handover-Themen sind umgesetzt; PO-Entscheidungen q01/q02 eingearbeitet.
+
+**Umsetzung**
+
+| ID | Thema | Lösung | Status |
+|---|---|---|---|
+| bug45 | `moodle_find_user` Discovery-Asymmetrie | Admin-aware Fallback: bei `is_siteadmin`/`moodle/site:sendmessage` direkte `{user}`-Namenssuche (Mehrwort-Matching über `firstname`/`lastname` + Full-Name), jeder Treffer per `can_send_message()` gefiltert. Nicht-sendbare bleiben gefiltert (q01); nicht-privilegierte Token unverändert. | fixed |
+| bug46 | `moodle_search_courses` Browsing/Scope | `scope`-Parameter `catalogue`(Default)\|`enrolled`; `query` optional (leer = Browsen via `core_course_category::top()->get_courses(recursive)`, Front-Page id 1 ausgeschlossen, Capability-Sichtbarkeit). `enrolled` delegiert an `moodle_my_courses` (Konsolidierung, q02). | fixed |
+
+**q01-Entscheidung:** nicht-sendbare User weiter filtern (kein `messageable`-Flag).
+**q02-Entscheidung:** scope-Modus statt separatem Tool; `enrolled` auf
+`moodle_my_courses` konsolidiert.
+
+**Verifikation**
+- `php -l` für `moodle_find_user`, `moodle_search_courses`, `moodle_my_courses`: passed
+- Versionssprung `2026061204`, CHANGELOG `1.0.1` (Added)
+- PHPUnit/Behat + Live-Smoke gegen „eledia.ai Local Moodle": offen → in CI / lokal
+  gemäß Handover-Checkliste (Admin ohne Einschreibung findet alle Kurse / User 72)
+
+---
+
+### review56 webservice_elediamcp Härtung M-3 + N-2
+Datum:   2026-06-27
+Branch:  review_johannes
+Typ:     Härtung verbliebener Review-Befunde
+Status:  fixed
+
+**Umsetzung**
+
+| ID | Thema | Lösung | Status |
+|---|---|---|---|
+| M-3 | Rate-Limiter nicht atomar | Read-Increment-Write in `security::enforce_rate_limit()` wird über den MUC-Lock (`cache::acquire_lock`/`release_lock`) pro Bucket serialisiert; bei Lock-Fehlschlag Best-Effort statt Request-Abbruch. Atomar auch auf nicht-atomaren Stores; Redis weiter für Performance empfohlen. | fixed |
+| N-2 | Announcements ohne `uservisible`/Gruppen-Check | `moodle_get_announcements` löst News-Foren via `get_fast_modinfo` auf und liest nur Foren mit sichtbarem cm (`uservisible`); Separate-Groups-Discussions werden auf die Gruppen des Nutzers gescoped (`accessallgroups` berücksichtigt). | fixed |
+
+**Verifikation**
+- `php -l` für `security.php`, `moodle_get_announcements.php`: passed
+- Versionssprung `2026061205`, CHANGELOG `1.0.1` (Hardened)
+- PHPUnit/Behat: offen → in CI
+
+---
+
+### review57 webservice_elediamcp lokaler PHPUnit-Lauf (CI test-Stage lokal)
+Datum:   2026-06-27
+Branch:  review_johannes
+Typ:     Lokale Testausführung (OrbStack) + Folgefund
+Status:  green
+
+**Kontext**
+Plugin in lokales Docker/OrbStack-Moodle (`demo-webserver-1`, Moodle 5.1.3+,
+PHP 8.3, PostgreSQL) deployt und die CI-`test`-Stage lokal ausgeführt:
+`phpunit --testsuite webservice_elediamcp_testsuite`.
+
+**Folgefund (Severity S2, Privacy) — behoben**
+Der lokale Lauf deckte auf, dass das E-Mail-Hiding das **falsche Property**
+`$user->emaildisplay` las. Das Moodle-Feld heißt `maildisplay`
+(`user_create_user` kennt nur `maildisplay`). Dadurch lieferte `?? 2` immer den
+Default „sichtbar", und die E-Mail wurde in `moodle_me` /
+`moodle_verify_user_context` **unabhängig** von der Nutzereinstellung
+ausgegeben — der review51/HO-2-Fix hatte faktisch nie gegriffen. Korrigiert in
+Code und Tests (`emaildisplay` → `maildisplay`).
+
+**Weiterer Test-Fix**
+`tool_provider_test::test_get_tools` setzte `expose_raw_functions` nicht; seit
+review53 ist der Default OFF, daher fehlten die Raw-Tools. Test aktiviert das
+Flag nun explizit.
+
+**Ergebnis**
+- PHPUnit: **123 Tests, 711 Assertions, 0 Failures** (exit 0). Vorher 3 Failures
+  (2× maildisplay, 1× expose_raw_functions).
+- 14 PHPUnit-Deprecation-Hinweise (Annotation-Stil), nicht test-brechend.
+- Version `2026061206`, CHANGELOG `1.0.1` (Security).
+- Codechecker (`phpcs --standard=moodle`): **354 Errors / 72 Warnings, 332
+  auto-fixbar** — überwiegend Formatierung der aktuellen moodle-cs, auch in
+  unveränderten Dateien (vorbestehend). Offen: PHPCBF-Lauf (separat, großer
+  rein formaler Diff).
 
 ---
 

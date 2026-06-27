@@ -73,8 +73,6 @@ class moodle_me implements ai_tool {
      * @return array<string, mixed>
      */
     public static function input_schema(): array {
-        $email = (int) ($user->emaildisplay ?? 2) >= 1 ? (string) ($user->email ?? '') : '';
-
         return [
             'type' => 'object',
             'additionalProperties' => false,
@@ -150,6 +148,7 @@ class moodle_me implements ai_tool {
         $fullname = fullname($user);
         $profileurl = (new moodle_url('/user/profile.php', ['id' => $userid]))->out(false);
         $stringopts = ['context' => \context_system::instance(), 'filter' => false, 'escape' => true];
+        $email = (int) ($user->maildisplay ?? 2) >= 1 ? (string) ($user->email ?? '') : '';
 
         return [
             'user' => [

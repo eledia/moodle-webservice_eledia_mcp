@@ -116,7 +116,7 @@ final class ai_tools_test extends advanced_testcase {
         $this->resetAfterTest(true);
         $user = $this->getDataGenerator()->create_user([
             'email' => 'hidden@example.test',
-            'emaildisplay' => 0,
+            'maildisplay' => 0,
         ]);
         $this->setUser($user);
 
@@ -156,7 +156,7 @@ final class ai_tools_test extends advanced_testcase {
 
         $user = $this->getDataGenerator()->create_user([
             'email' => 'hidden-context@example.test',
-            'emaildisplay' => 0,
+            'maildisplay' => 0,
         ]);
         $this->setUser($user);
 

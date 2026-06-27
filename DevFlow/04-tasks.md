@@ -40,6 +40,24 @@ Aktuell läuft der wöchentliche Demo-Hub Smoke-Test über einen Claude-Cron (`a
 
 Offene Fragen, die Fortschritt blockieren. ID-Format: `qXX`.
 
+### q01 moodle_find_user: admin-aware Discovery — und nicht-sendbare User filtern oder flaggen?
+Linked: bug45 / task52
+Asked-by: KI
+Status: answered
+Answer: PO-Entscheid: Privilegierte Token (Site-Admin / `moodle/site:sendmessage`)
+durchsuchen die `{user}`-Tabelle direkt; nicht-sendbare Treffer werden **weiter
+gefiltert** (kein `messageable`-Flag). Nicht-privilegierte Token unverändert.
+Umgesetzt in bug45/review55.
+
+### q02 moodle_search_courses: eigenes Browse-Tool oder Scope-Modus — und mit my_courses konsolidieren?
+Linked: bug46 / task53
+Asked-by: KI
+Status: answered
+Answer: PO-Entscheid: **Scope-Modus** (`catalogue` | `enrolled`) in
+`moodle_search_courses`, kein separates Tool; `query` optional (leer = Browsen).
+Der `enrolled`-Scope wird auf `moodle_my_courses` **konsolidiert** (Delegation).
+Umgesetzt in bug46/review55.
+
 ### Vorlage
 
 ```
@@ -162,6 +180,86 @@ und Upgrade-Risiken in Certify und Pathways sind behoben.
 
 ---
 
+### task52 moodle_find_user admin-aware Discovery
+Status:    done
+Feature:   webservice_elediamcp
+Priorität: P2
+Linked:    bug45, q01, review55
+
+**Ergebnis (2026-06-27)**
+Admin-aware Fallback + Mehrwort-Namensmatching umgesetzt; nicht-sendbare User
+bleiben gefiltert (q01). `php -l` grün, Version `2026061204`. PHPUnit/Live-Smoke
+offen (CI).
+
+
+**Ziel**
+Der Discovery-Pfad (`moodle_find_user`) ist konsistent zum Action-Pfad
+(`moodle_send_message`): Was per ID sendbar ist, ist auch per Namenssuche
+auffindbar — ohne Sichtbarkeits-Regression für nicht-privilegierte Token.
+
+**Schritte**
+1. Admin-Fallback: Wenn Token-User `is_siteadmin` ist bzw.
+   `moodle/site:sendmessage` hält, statt `message_search_users()` direkt über
+   `core_user_get_users_by_field` / `{user}`-Suche auflösen.
+2. Mehrwort-Namensmatching gegen `firstname`/`lastname` bzw.
+   `CONCAT(firstname,' ',lastname)`.
+3. Optional `messageable`-Flag pro Treffer statt Unterdrückung (siehe q01).
+4. Negative-/Regressionstests: nicht-privilegierte Token sehen weiterhin nur
+   erlaubte User.
+
+**Erwartetes Ergebnis**
+`moodle_find_user(query="Paul"|"Maier"|"Paul Maier")` findet User 72, wenn der
+Token-User Site-Sende-Rechte hat. AKs siehe bug45.
+
+**Done-Checkliste**
+- [ ] 01-features.md aktualisiert (falls Verhalten geändert)
+- [ ] 03-dev-doc.md aktualisiert
+- [ ] testXX in 05-quality.md grün
+- [ ] PO Sign-off
+
+### task53 moodle_list_courses / Katalog-Browsing
+Status:    done
+Feature:   webservice_elediamcp
+Priorität: P2
+Linked:    bug46, q02, review55
+
+**Ergebnis (2026-06-27)**
+Statt separatem Tool: `scope`-Parameter (`catalogue`|`enrolled`) + optionale
+Query (leer = Browsen) in `moodle_search_courses`; `enrolled` auf
+`moodle_my_courses` konsolidiert (q02). `php -l` grün, Version `2026061204`.
+PHPUnit/Live-Smoke offen (CI).
+
+
+**Ziel**
+„Alle Kurse auflisten/zählen" (Enumeration) wird abgebildet, ohne die Such-API
+zu missbrauchen. `moodle_search_courses` bleibt für echte Suche und nutzt bereits
+korrekt `core_course_category::search_courses()`.
+
+**Schritte**
+1. Neues Tool `moodle_list_courses`: paginiertes Katalog-Browsing ohne Query
+   (z. B. `core_course_category::top()->get_courses(['recursive'=>true,…])`),
+   Front-Page-Kurs (id 1) ausgeschlossen, Capability-Sichtbarkeit (Admin sieht
+   versteckte, Teilnehmer nur freigegebene).
+2. Optional `scope`-Parameter (`catalogue` | `enrolled`) in
+   `moodle_search_courses`; ggf. `enrolled` mit `moodle_my_courses` konsolidieren
+   (siehe q02).
+3. Tool-Beschreibungen schärfen: Suchen vs. Browsen für das LLM klar trennen.
+4. Tests gemäß Handover-Checkliste (Admin ohne Einschreibung sieht alle 3 Kurse,
+   versteckter Kurs/Kategorie, Front-Page nie, Pagination, Gastkontext).
+
+**Erwartetes Ergebnis**
+Admin ohne Einschreibung erhält über das List-Tool alle sichtbaren Kurse;
+search liefert weiterhin nur echte Keyword-Treffer.
+
+**Done-Checkliste**
+- [ ] 01-features.md aktualisiert
+- [ ] 02-user-doc.md aktualisiert (falls UX geändert)
+- [ ] 03-dev-doc.md aktualisiert
+- [ ] testXX in 05-quality.md grün
+- [ ] PO Sign-off
+
+---
+
 ## 🔧 In Progress
 
 Tasks, an denen aktuell gearbeitet wird. Hier landen Tasks, sobald die KI mit `#implement` startet.
@@ -266,6 +364,36 @@ that make up the Pathway before deciding whether to start/request it.
 ## ✅ Done
 
 Erledigte Tasks. Nicht löschen — sie sind die Historie der Entscheidungen.
+
+### task51 webservice_elediamcp Review-Fixes Runde 2
+Status:    done
+Feature:   webservice_elediamcp
+Priorität: P1
+Linked:    review54
+
+**Ziel**
+Die in der zweiten Review-Runde gefundenen Befunde sind behoben.
+
+**Ergebnis**
+- H-1 (`moodle_me` E-Mail), M-1 (`search_content` Snippet-Escaping),
+  M-2 (`create_user` nur aktivierte Auth-Plugins), N-1, N-3, N-4, N-5, N-6
+  umgesetzt.
+- H-2 als Admin-Setting `enforce_mcp_service` (Default an) implementiert:
+  `server::authenticate_user()`-Override prüft, dass das Token zu einem
+  konfigurierten MCP-Service gehört.
+- Version `2026061203`, CHANGELOG `1.0.1`.
+- `php -l` für alle geänderten Dateien grün, `git diff --check` sauber.
+- PHPUnit/Behat: offen (keine lokale Moodle-PHPUnit-Umgebung) → in CI nachziehen.
+
+**Folgearbeit (alle erledigt)**: bug45/task52 (find_user) und bug46/task53
+(search_courses scope/browse) → review55; M-3 (Rate-Limiter atomar via MUC-Lock)
+und N-2 (Announcements `uservisible`/Gruppen) → review56. Offen bleibt nur die
+PHPUnit/Behat-Ausführung in der CI.
+
+**Done-Checkliste**
+- [x] 03-dev-doc.md/Review-Protokoll aktualisiert (review54)
+- [x] testXX/Review in 05-quality.md ergänzt
+- [ ] PO Sign-off
 
 ### task47 Customer Portal billing-event history
 Status:    done

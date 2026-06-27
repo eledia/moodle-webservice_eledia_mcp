@@ -90,6 +90,12 @@ class configuration_form extends moodleform {
             get_string('setting_allow_token_in_query_desc', 'webservice_elediamcp'), null, [0, 1]);
         $mform->addHelpButton('allow_token_in_query', 'setting_allow_token_in_query', 'webservice_elediamcp');
 
+        $mform->addElement('html', \html_writer::span('', '', ['id' => 'admin-enforce_mcp_service']));
+        $mform->addElement('advcheckbox', 'enforce_mcp_service',
+            get_string('setting_enforce_mcp_service', 'webservice_elediamcp'),
+            get_string('setting_enforce_mcp_service_desc', 'webservice_elediamcp'), null, [0, 1]);
+        $mform->addHelpButton('enforce_mcp_service', 'setting_enforce_mcp_service', 'webservice_elediamcp');
+
         $mform->addElement('html', \html_writer::span('', '', ['id' => 'admin-rate_limit_per_minute']));
         $mform->addElement('text', 'rate_limit_per_minute',
             get_string('setting_rate_limit_per_minute', 'webservice_elediamcp'), ['size' => 8]);

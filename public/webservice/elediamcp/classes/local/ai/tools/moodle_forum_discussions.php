@@ -227,7 +227,9 @@ class moodle_forum_discussions implements ai_tool {
             return self::read_posts($discussionid, $user, $limit, $offset);
         }
         if ($cmid > 0) {
-            return self::list_discussions([$cmid], $user, $limit, $offset);
+            $single = self::list_discussions([$cmid], $user, $limit, $offset);
+            unset($single['counts_by_cmid']);
+            return $single;
         }
         if ($courseid > 0) {
             return self::list_course($courseid, $user, $limit, $offset);
@@ -280,14 +282,15 @@ class moodle_forum_discussions implements ai_tool {
         }
 
         $result = self::list_discussions($cmids, $user, $limit, $offset);
+        $countsbycmid = $result['counts_by_cmid'] ?? [];
+        unset($result['counts_by_cmid']);
 
         // Fill type + per-forum counts now that discussions were resolved.
         global $DB;
         foreach ($forums as $i => $forum) {
             $record = $DB->get_record('forum', ['id' => $forum['forum_id']], 'id, type');
             $forums[$i]['type'] = $record ? (string) $record->type : '';
-            $forums[$i]['discussion_count'] = count(array_filter($result['discussions'],
-                static fn($d) => $d['forum_cmid'] === $forum['cmid']));
+            $forums[$i]['discussion_count'] = (int) ($countsbycmid[(int) $forum['cmid']] ?? 0);
         }
         $result['forums'] = $forums;
         return $result;
@@ -364,10 +367,20 @@ class moodle_forum_discussions implements ai_tool {
 
         usort($entries, static fn($a, $b) => strcmp($b['last_post_iso'], $a['last_post_iso']));
         $total = count($entries);
+
+        // Per-forum visible discussion counts from the full result set, computed
+        // before pagination so the count is not limited to the current page.
+        $countsbycmid = [];
+        foreach ($entries as $entry) {
+            $key = (int) $entry['forum_cmid'];
+            $countsbycmid[$key] = ($countsbycmid[$key] ?? 0) + 1;
+        }
+
         $page = array_slice($entries, $offset, $limit);
 
         return [
             'discussions' => $page,
+            'counts_by_cmid' => $countsbycmid,
             'total' => $total,
             'limit' => $limit,
             'offset' => $offset,

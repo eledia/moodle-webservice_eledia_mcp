@@ -101,20 +101,6 @@ class request {
     }
 
     /**
-     * Create an MCP request object from raw HTTP input.
-     *
-     * Reads the raw request body from php://input, decodes the JSON,
-     * validates the structure, and returns a fully constructed request object.
-     *
-     * @return self A validated request instance.
-     * @throws moodle_exception If the body is empty, JSON decoding fails, or the request format is invalid.
-     */
-    public static function from_raw_input(): self {
-        $raw = file_get_contents('php://input');
-        return self::from_string($raw === false ? '' : $raw);
-    }
-
-    /**
      * Create an MCP request object from a raw JSON string.
      *
      * @param string $raw Raw JSON request body.
@@ -155,15 +141,5 @@ class request {
         }
 
         return new self($data);
-    }
-
-    /**
-     * Check if raw input body is empty.
-     *
-     * @return bool True if the request body is empty or unreadable.
-     */
-    public static function is_raw_input_empty(): bool {
-        $raw = file_get_contents('php://input');
-        return $raw === '' || $raw === false;
     }
 }

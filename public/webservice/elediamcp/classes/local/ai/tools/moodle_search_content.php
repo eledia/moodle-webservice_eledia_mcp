@@ -244,7 +244,7 @@ class moodle_search_content implements ai_tool {
             }
             $results[] = [
                 'title' => format_string((string) $doc->get('title'), true, $stringopts),
-                'snippet' => $snippet,
+                'snippet' => s($snippet),
                 'course_id' => $doc->is_set('courseid') ? (int) $doc->get('courseid') : null,
                 'course_name' => '',
                 'area' => (string) $doc->get('areaid'),
@@ -303,7 +303,7 @@ class moodle_search_content implements ai_tool {
                 }
                 $results[] = [
                     'title' => format_string($name, true, $stringopts),
-                    'snippet' => $snippet,
+                    'snippet' => s($snippet),
                     'course_id' => (int) $course->id,
                     'course_name' => format_string((string) $course->fullname, true, $stringopts),
                     'area' => 'activity:' . $cm->modname,

@@ -256,6 +256,10 @@ final class tool_provider_test extends externallib_advanced_testcase {
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
+        // Raw Moodle Web Service functions are off by default; enable them so the
+        // raw-function side of the catalogue is exercised by this test.
+        set_config('expose_raw_functions', 1, 'webservice_elediamcp');
+
         // Create a test service.
         $service = new stdClass();
         $service->name = 'Test MCP Service';

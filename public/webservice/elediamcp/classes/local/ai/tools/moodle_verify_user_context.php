@@ -280,7 +280,7 @@ class moodle_verify_user_context implements ai_tool {
             ];
         }
 
-        $email = (int) ($user->emaildisplay ?? 2) >= 1 ? (string) ($user->email ?? '') : '';
+        $email = (int) ($user->maildisplay ?? 2) >= 1 ? (string) ($user->email ?? '') : '';
 
         $payload = [
             'valid' => true,

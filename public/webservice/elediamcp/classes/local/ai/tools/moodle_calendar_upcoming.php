@@ -256,8 +256,9 @@ class moodle_calendar_upcoming implements ai_tool {
                 true
             );
         } catch (Throwable $ex) {
+            debugging('moodle_calendar_upcoming failed: ' . $ex->getMessage(), DEBUG_DEVELOPER);
             throw new tool_exception(
-                'Failed to load calendar events: ' . $ex->getMessage(),
+                'Failed to load calendar events.',
                 ['days_ahead' => $days, 'course_id' => $courseidfilter]
             );
         }
@@ -360,8 +361,8 @@ class moodle_calendar_upcoming implements ai_tool {
         if ($plain === '') {
             return '';
         }
-        if (strlen($plain) > 200) {
-            $plain = substr($plain, 0, 197) . '...';
+        if (\core_text::strlen($plain) > 200) {
+            $plain = \core_text::substr($plain, 0, 197) . '...';
         }
         return $plain;
     }

@@ -5,6 +5,57 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.0.1] - 2026-06-27
+
+### Added
+- `moodle_search_courses` gained a `scope` parameter (`catalogue` default |
+  `enrolled`) and now treats `query` as optional: omitting it browses/lists all
+  courses in the scope (catalogue browsing answers "how many courses are there"),
+  while a keyword still searches. The `enrolled` scope is consolidated onto
+  `moodle_my_courses` (single implementation for the user's own courses).
+- `moodle_find_user` now finds users for callers with site-wide messaging rights
+  (site admins / `moodle/site:sendmessage`) even without a shared course, so
+  discovery matches what `moodle_send_message` can actually reach. Multi-word
+  name fragments ("Paul Maier") are matched across first/last name. Non-messageable
+  users stay filtered out, and non-privileged callers are unchanged.
+
+### Hardened
+- Rate limiting is now atomic: the per-bucket read-increment-write is serialised
+  through the MUC lock, so limits hold even on cache stores that are not natively
+  atomic (Redis still recommended for performance).
+- `moodle_get_announcements` now only reads announcement forums whose course-module
+  is visible to the user (hidden modules / availability restrictions are honoured)
+  and scopes separate-groups announcements to the user's groups.
+
+### Security
+- Email visibility now actually works: `moodle_me` and `moodle_verify_user_context`
+  read the correct user field `maildisplay` (previously the non-existent
+  `emaildisplay`, so the guard never triggered and the address was returned
+  regardless of the user's "hide my email" preference). Verified by PHPUnit.
+- The MCP endpoint now restricts access to tokens that belong to a configured
+  MCP external service (new admin setting **Restrict endpoint to MCP services**,
+  enabled by default). Previously any valid Moodle web-service token could reach
+  the AI tools; the MCP service list now governs endpoint access, not just token
+  issuance. Can be disabled for transitional setups.
+- `moodle_create_user` now accepts only **enabled** auth methods instead of any
+  installed auth plugin, so callers cannot bypass the site's account policy.
+- `moodle_search_content` now HTML-escapes result snippets, consistent with the
+  other tool fields.
+- `moodle_course_contents` no longer reveals hidden section names/summaries to
+  users without `moodle/course:viewhiddenactivities`.
+- `moodle_search_courses` and `moodle_calendar_upcoming` no longer surface
+  internal exception messages to the client (logged via `debugging()` instead).
+
+### Fixed
+- `moodle_me` returned no email because of a misplaced assignment; the email is
+  now resolved correctly (still gated by the user's `emaildisplay`).
+- `moodle_forum_discussions` reported `discussion_count` from the current page
+  only; it now reflects the full, visibility-filtered discussion count.
+- Text truncation across several tools is now multibyte-safe (`core_text`),
+  avoiding broken UTF-8 in excerpts/previews.
+- Removed dead `request::from_raw_input()` / `request::is_raw_input_empty()`
+  helpers that re-read `php://input`.
+
 ## [1.0.0] - 2026-06-12
 
 ### Added

@@ -360,6 +360,54 @@ follow-up PRs.
 
 ---
 
+### feat51 webservice_elediamcp MCP server access boundary
+
+**Ziel**
+Der MCP-Endpoint (`webservice/elediamcp/server.php`) macht Moodle als kuratierte
+AI-Tool-Fläche verfügbar. Die vom Admin gewählte „MCP external services"-Liste
+muss die tatsächliche Zugriffsgrenze sein — nicht nur für die Token-Ausgabe,
+sondern auch für die Token-Annahme.
+
+---
+
+**Verhalten**
+
+- Jedes AI-Tool läuft im Kontext des authentifizierten Nutzers und erzwingt die
+  gleichen Capability-/Enrolment-/Sichtbarkeitsprüfungen wie die jeweilige
+  Moodle-Oberfläche.
+- Bei aktivem `enforce_mcp_service` (Default) akzeptiert der Endpoint nur Tokens,
+  deren externer Service in der MCP-Service-Liste steht; andere Tokens erhalten
+  401.
+- Schreib-Tools (`moodle_send_message`, `moodle_create_user`,
+  `moodle_create_course`) verlangen Zwei-Schritt-Bestätigung und die jeweils
+  passende Moodle-Capability.
+
+---
+
+**Akzeptanzkriterien**
+
+- feat51.AC01
+  Given:  Ein gültiges Token gehört zu einem Service, der NICHT als MCP-Service
+          konfiguriert ist, und `enforce_mcp_service` ist aktiv
+  When:   Das Token den Endpoint anspricht
+  Then:   Der Endpoint antwortet mit 401 und gibt keine Tool-Ergebnisse zurück
+
+- feat51.AC02
+  Given:  Ein Token eines konfigurierten MCP-Services
+  When:   `tools/list` / `tools/call` aufgerufen wird
+  Then:   Die kuratierten AI-Tools sind nutzbar, jeweils self-scoped auf den
+          Token-Nutzer
+
+---
+
+**Non-Goals**
+
+- Keine Aufweichung der Per-Tool-Capability-Checks.
+- Discovery-/Browsing-Lücken (`moodle_find_user`, Katalog-Browsing) sind als
+  bug45/bug46 separat erfasst und nicht Teil dieses Features.
+
+---
+
 ### featXX [Feature-Name]
 
 **Ziel**

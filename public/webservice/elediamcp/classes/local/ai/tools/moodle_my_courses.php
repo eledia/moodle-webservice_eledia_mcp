@@ -78,8 +78,9 @@ class moodle_my_courses implements ai_tool {
         return 'Returns the courses the authenticated user is enrolled in, with optional '
             . 'classification (all, inprogress, future, past), substring search and pagination. '
             . 'Lighter than moodle_verify_user_context: no roles, no groups, no capability set. '
-            . 'Use this to enumerate available courses, then call moodle_course_contents with a '
-            . 'specific course_id to see what is inside.';
+            . 'Use this to enumerate the user\'s own courses, then call moodle_course_contents '
+            . 'with a specific course_id to see what is inside. To find courses the user is NOT '
+            . 'enrolled in, use moodle_search_courses (scope=catalogue).';
     }
 
     /**
@@ -314,8 +315,8 @@ class moodle_my_courses implements ai_tool {
         ];
         $plain = format_text($summary, $format, $opts);
         $plain = trim(html_to_text($plain, 0, false));
-        if (strlen($plain) > 240) {
-            $plain = substr($plain, 0, 237) . '...';
+        if (\core_text::strlen($plain) > 240) {
+            $plain = \core_text::substr($plain, 0, 237) . '...';
         }
         return $plain;
     }

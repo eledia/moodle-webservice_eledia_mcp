@@ -236,19 +236,56 @@ class moodle_get_announcements implements ai_tool {
             return self::empty_payload($lookback);
         }
 
+        // Only read announcement forums whose course-module is visible to the user
+        // (honours hidden modules, availability restrictions and course visibility),
+        // and remember group access so separate-groups discussions stay scoped.
+        $visibleforumids = [];
+        $foruminfo = [];
+        foreach (array_keys($coursemap) as $cid) {
+            try {
+                $modinfo = get_fast_modinfo((int) $cid, $userid);
+            } catch (Throwable $ex) {
+                continue;
+            }
+            foreach ($modinfo->get_instances_of('forum') as $cm) {
+                if (!$cm->uservisible) {
+                    continue;
+                }
+                $forumid = (int) $cm->instance;
+                $visibleforumids[$forumid] = true;
+                $groupmode = (int) $cm->effectivegroupmode;
+                $modcontext = \context_module::instance($cm->id);
+                $accessall = $groupmode !== SEPARATEGROUPS
+                    || has_capability('moodle/site:accessallgroups', $modcontext, $userid);
+                $foruminfo[$forumid] = [
+                    'accessall' => $accessall,
+                    'allowed' => $accessall
+                        ? []
+                        : array_keys(groups_get_all_groups((int) $cid, $userid, (int) $cm->groupingid)),
+                ];
+            }
+        }
+        if (empty($visibleforumids)) {
+            return self::empty_payload($lookback);
+        }
+
         [$insql, $params] = $DB->get_in_or_equal(array_keys($coursemap), SQL_PARAMS_NAMED, 'cid');
+        [$inforumsql, $forumparams] = $DB->get_in_or_equal(array_keys($visibleforumids), SQL_PARAMS_NAMED, 'fid');
+        $params += $forumparams;
         $params['since'] = time() - ($lookback * DAYSECS);
 
         // We pull the first post per discussion (the announcement body) and order by
         // discussion timemodified (which is bumped on replies, useful for "what changed
         // recently?").
         $sql = "SELECT d.id AS discussionid, d.name AS subject, d.timemodified, d.course AS courseid,
+                       d.groupid AS groupid,
                        p.id AS postid, p.userid AS authorid, p.message AS body, p.messageformat,
                        p.created AS posttime, f.id AS forumid
                   FROM {forum_discussions} d
                   JOIN {forum} f ON f.id = d.forum AND f.type = 'news'
                   JOIN {forum_posts} p ON p.id = d.firstpost
                  WHERE d.course $insql
+                   AND f.id $inforumsql
                    AND d.timemodified >= :since
               ORDER BY d.timemodified DESC";
         $rows = $DB->get_records_sql($sql, $params, 0, $limit + 1); // +1 for has_more probe.
@@ -271,6 +308,15 @@ class moodle_get_announcements implements ai_tool {
         $entries = [];
         foreach ($rows as $r) {
             $courseid = (int) $r->courseid;
+            // Separate-groups announcement: skip discussions targeted at a group the
+            // user is not in (unless they may access all groups).
+            $fi = $foruminfo[(int) $r->forumid] ?? null;
+            if ($fi !== null && !$fi['accessall']) {
+                $gid = (int) $r->groupid;
+                if ($gid > 0 && !in_array($gid, $fi['allowed'], true)) {
+                    continue;
+                }
+            }
             $entry = [
                 'discussion_id' => (int) $r->discussionid,
                 'post_id' => (int) $r->postid,
@@ -325,8 +371,8 @@ class moodle_get_announcements implements ai_tool {
         if ($plain === '') {
             return '';
         }
-        if (strlen($plain) > $max) {
-            $plain = substr($plain, 0, $max - 3) . '...';
+        if (\core_text::strlen($plain) > $max) {
+            $plain = \core_text::substr($plain, 0, $max - 3) . '...';
         }
         return $plain;
     }

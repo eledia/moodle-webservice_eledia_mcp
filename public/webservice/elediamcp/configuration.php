@@ -189,6 +189,8 @@ $current = (object) [
     'token_retention_days' => get_config('webservice_elediamcp', 'token_retention_days') ?: 30,
     'allowed_origins' => get_config('webservice_elediamcp', 'allowed_origins') ?: '',
     'allow_token_in_query' => (int) (get_config('webservice_elediamcp', 'allow_token_in_query') ?: 0),
+    'enforce_mcp_service' => (int) (get_config('webservice_elediamcp', 'enforce_mcp_service') !== false
+        ? get_config('webservice_elediamcp', 'enforce_mcp_service') : 1),
     'expose_raw_functions' => (int) (get_config('webservice_elediamcp', 'expose_raw_functions') !== false
         ? get_config('webservice_elediamcp', 'expose_raw_functions') : 0),
     'rate_limit_per_minute' => get_config('webservice_elediamcp', 'rate_limit_per_minute') ?: 60,
@@ -214,6 +216,7 @@ if ($data = $mform->get_data()) {
     set_config('token_retention_days', max(0, (int) $data->token_retention_days), 'webservice_elediamcp');
     set_config('allowed_origins', (string) $data->allowed_origins, 'webservice_elediamcp');
     set_config('allow_token_in_query', empty($data->allow_token_in_query) ? 0 : 1, 'webservice_elediamcp');
+    set_config('enforce_mcp_service', empty($data->enforce_mcp_service) ? 0 : 1, 'webservice_elediamcp');
     set_config('expose_raw_functions', empty($data->expose_raw_functions) ? 0 : 1, 'webservice_elediamcp');
     set_config('rate_limit_per_minute', max(0, (int) $data->rate_limit_per_minute), 'webservice_elediamcp');
     set_config('rate_limit_per_hour', max(0, (int) $data->rate_limit_per_hour), 'webservice_elediamcp');

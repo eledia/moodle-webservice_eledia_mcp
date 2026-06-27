@@ -337,7 +337,7 @@ class moodle_course_contents implements ai_tool {
                 $sectionmodules[] = $entry;
             }
 
-            if (!$sectioninfo->uservisible && !$includehidden) {
+            if (!$sectioninfo->uservisible && (!$includehidden || !$canviewhidden)) {
                 continue;
             }
 
@@ -407,8 +407,8 @@ class moodle_course_contents implements ai_tool {
         if ($plain === '') {
             return '';
         }
-        if (strlen($plain) > $max) {
-            $plain = substr($plain, 0, $max - 3) . '...';
+        if (\core_text::strlen($plain) > $max) {
+            $plain = \core_text::substr($plain, 0, $max - 3) . '...';
         }
         return $plain;
     }

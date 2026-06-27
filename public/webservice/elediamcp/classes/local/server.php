@@ -149,6 +149,31 @@ class server extends webservice_base_server {
     }
 
     /**
+     * Authenticate the token holder and, unless disabled, enforce that the token
+     * belongs to a configured MCP external service.
+     *
+     * Overriding the base authenticator covers every entry path (MCP methods,
+     * AI-native tools and raw Web Service functions via parent::run()). After
+     * authentication, {@see webservice_server::$restricted_serviceid} holds the
+     * token's external service id.
+     *
+     * @return void
+     * @throws \webservice_access_exception When the service is not an MCP service.
+     */
+    protected function authenticate_user(): void {
+        parent::authenticate_user();
+
+        if (!security::enforce_mcp_service()) {
+            return;
+        }
+        if (!token_manager::is_mcp_service((int) $this->restricted_serviceid)) {
+            throw new \webservice_access_exception(
+                get_string('err_not_mcp_service', 'webservice_elediamcp')
+            );
+        }
+    }
+
+    /**
      * Enforce webservice/elediamcp:use before handling MCP requests.
      *
      * @return void

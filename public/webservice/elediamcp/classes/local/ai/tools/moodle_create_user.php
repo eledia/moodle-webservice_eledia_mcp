@@ -19,7 +19,6 @@ declare(strict_types=1);
 namespace webservice_elediamcp\local\ai\tools;
 
 use context_system;
-use core_component;
 use core_text;
 use core_user;
 use moodle_url;
@@ -173,8 +172,12 @@ class moodle_create_user implements ai_tool {
         if (!validate_email((string) $record->email)) {
             throw new tool_exception('email must be a valid email address.', ['email' => $record->email]);
         }
-        if (core_component::get_plugin_directory('auth', (string) $record->auth) === null) {
-            throw new tool_exception('auth plugin does not exist.', ['auth' => $record->auth]);
+        // Only allow auth methods the admin has actually enabled (manual/nologin are
+        // always enabled). Checking mere plugin existence would let a caller bypass
+        // the site's account-creation policy.
+        $enabledauths = \core\plugininfo\auth::get_enabled_plugins();
+        if (!isset($enabledauths[(string) $record->auth])) {
+            throw new tool_exception('auth plugin is not enabled.', ['auth' => $record->auth]);
         }
         if ($DB->record_exists('user', ['username' => $record->username, 'mnethostid' => $record->mnethostid])) {
             throw new tool_exception('username is already in use.', ['username' => $record->username]);

@@ -80,6 +80,20 @@ class security {
     }
 
     /**
+     * Determine whether the MCP endpoint only accepts tokens that belong to a
+     * configured MCP external service.
+     *
+     * Enabled by default so the admin-curated MCP service list is the access
+     * boundary for the endpoint, not just for token issuance. Can be disabled for
+     * transitional setups that present tokens minted for other web services.
+     *
+     * @return bool
+     */
+    public static function enforce_mcp_service(): bool {
+        return (int) self::get_config('enforce_mcp_service', 1) === 1;
+    }
+
+    /**
      * Return the configured list of allowed CORS origins.
      *
      * @return string[] Lower-cased origin URLs ("*" for wildcard).
@@ -182,10 +196,11 @@ class security {
      * Returns a snapshot containing whether the request is allowed and the
      * number of seconds until the window resets. Counters are kept in the
      * Moodle Application cache (configurable as a Redis/Memcached store in
-     * production deployments). The application-cache increment is intentionally
-     * lightweight and is not guaranteed to be atomic on every cache backend; use
-     * a shared atomic cache store such as Redis for stricter production limits.
-     * Rejected requests still advance the current window counters.
+     * production deployments). The read-increment-write is serialised through the
+     * MUC lock for the bucket, so the counter is atomic even on cache stores that
+     * are not natively atomic; a shared store such as Redis is still recommended
+     * for performance under load. Rejected requests still advance the current
+     * window counters.
      *
      * @param string $key Stable identifier (see rate_limit_key()).
      * @return array{allowed: bool, retry_after: int, remaining_minute: int, remaining_hour: int}
@@ -206,11 +221,27 @@ class security {
         $minutekey = $key . '_m_' . $minutewindow;
         $hourkey = $key . '_h_' . $hourwindow;
 
-        $minutecount = ((int) ($cache->get($minutekey) ?: 0)) + 1;
-        $hourcount = ((int) ($cache->get($hourkey) ?: 0)) + 1;
+        // Serialise the read-increment-write through the MUC lock for this bucket so
+        // the counter is atomic on cache stores that are not natively atomic. If the
+        // lock cannot be taken we still count (best-effort) rather than fail the call.
+        $lockkey = 'rl_lock_' . $key;
+        $haslock = false;
+        try {
+            $haslock = (bool) $cache->acquire_lock($lockkey);
+        } catch (\Throwable $ex) {
+            $haslock = false;
+        }
+        try {
+            $minutecount = ((int) ($cache->get($minutekey) ?: 0)) + 1;
+            $hourcount = ((int) ($cache->get($hourkey) ?: 0)) + 1;
 
-        $cache->set($minutekey, $minutecount);
-        $cache->set($hourkey, $hourcount);
+            $cache->set($minutekey, $minutecount);
+            $cache->set($hourkey, $hourcount);
+        } finally {
+            if ($haslock) {
+                $cache->release_lock($lockkey);
+            }
+        }
 
         if ($perminute > 0 && $minutecount > $perminute) {
             return [
