@@ -164,7 +164,8 @@ if ($action === 'revoke' && $tokenid) {
 $usableservices = $buildusableservices();
 
 $mform = null;
-$newtoken = null;
+$newtoken = $SESSION->webservice_elediamcp_newtoken ?? null;
+unset($SESSION->webservice_elediamcp_newtoken);
 if (!empty($usableservices)) {
     $mform = new create_token_form($baseurl->out(false), ['services' => $usableservices]);
 
@@ -184,7 +185,8 @@ if (!empty($usableservices)) {
             $validuntil
         );
 
-        $newtoken = $result->token;
+        $SESSION->webservice_elediamcp_newtoken = $result->token;
+        redirect($baseurl);
     }
 }
 

@@ -699,6 +699,35 @@ Flag nun explizit.
 
 ---
 
+### review58 webservice_elediamcp finaler Plugin-Check
+Datum:   2026-06-28
+Branch:  review_johannes
+Typ:     Finaler lokaler Check vor Übergabe
+Status:  green
+
+**Ergebnis**
+- PHP-Syntaxprüfung aller Plugin-Dateien: **passed**.
+- PHPUnit `webservice_elediamcp_testsuite`: **passed** mit 123 Tests,
+  711 Assertions, 0 Failures; 14 PHPUnit-Deprecation-Hinweise.
+- Behat `@webservice_elediamcp`: **passed** mit 5 Szenarien, 48 Steps,
+  0 Failures. Der frühere `Copy it now`-Fund ist durch Post/Redirect/Get
+  für neu erzeugte Tokens behoben; Reload zeigt das Token nicht erneut.
+  Selenium/WebDriver lief über den lokalen Container `elediaai-selenium`.
+- Regression: Help-Action im MCP Plugin Shell Header zeigt jetzt auf
+  `/webservice/elediamcp/help.php`; per Behat abgedeckt. Die Hilfe rendert
+  die plugin-eigene Dokumentation aus `public/webservice/elediamcp/docs`.
+- Docs-Struktur: **passed**. Keine losen `.md`-Dokumente im Repo-Root;
+  `Docs` besteht aus den sechs Hauptdateien `00` bis `05`.
+
+**Offen vor Commit/Push**
+- Ungetracktes lokales Hilfsskript `tools/local-ci.sh` entweder mit korrekten
+  Container-Defaults produktionsfähig machen und aufnehmen oder aus dem
+  Übergabeumfang entfernen.
+- CSS-Fix zum Ausblenden der Moodle-Blockleiste final committen, falls der
+  aktuelle UI-Stand so bleiben soll.
+
+---
+
 ## Regeln
 
 - Jeder Bug bekommt eine Severity — auch S4 ist eine Severity.

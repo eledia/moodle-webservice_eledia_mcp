@@ -55,7 +55,7 @@ class server extends webservice_base_server {
     public const SERVER_NAME = 'Moodle MCP Server';
 
     /** @var string Server semantic version advertised in serverInfo. */
-    public const SERVER_VERSION = '1.0.0';
+    public const SERVER_VERSION = '1.1.0';
 
     /** @var string HTTP request method. */
     protected string $httpmethod = 'GET';
@@ -142,6 +142,10 @@ class server extends webservice_base_server {
             $this->dispatch_ai_tool($aiclass);
             $this->session_cleanup();
             die;
+        }
+
+        if (!premium::has_mcp_tools()) {
+            throw new \webservice_access_exception('accessexception');
         }
 
         // Parent's run() ends with die; the rest of this method is unreachable.

@@ -92,6 +92,9 @@ final class shell {
     public static function require_css(): void {
         global $PAGE, $CFG;
 
+        $PAGE->add_body_class('lh-plugin-shell-page');
+        $PAGE->add_body_class('path-webservice-elediamcp');
+
         if (file_exists($CFG->dirroot . '/local/lernhive/styles.css')) {
             $PAGE->requires->css(new moodle_url('/local/lernhive/styles.css'));
         }
@@ -119,6 +122,16 @@ final class shell {
         if (self::$usespluginshell) {
             $configurationurl = new moodle_url('/webservice/elediamcp/configuration.php');
             $tutorcomponent = self::tutor_component();
+            $actions = $pluginshell::action_slots(
+                'webservice_elediamcp',
+                true,
+                $configurationurl,
+                get_string('shell_help_label', 'webservice_elediamcp'),
+                get_string('shell_settings_label', 'webservice_elediamcp'),
+                true
+            );
+            $actions['helpurl'] = (new moodle_url('/webservice/elediamcp/help.php'))->out(false);
+
             $headerdata = [
                 'name' => $tutorcomponent !== null
                     ? get_string('pluginname', $tutorcomponent)
@@ -128,18 +141,7 @@ final class shell {
                     : get_string('configuration_tagline', 'webservice_elediamcp'),
                 'subtitle' => '',
                 'sectionnav' => self::sectionnav($active),
-            ] + $pluginshell::action_slots(
-                $tutorcomponent ?? 'webservice_elediamcp',
-                true,
-                $configurationurl,
-                $tutorcomponent !== null
-                    ? get_string('shell_help_label', $tutorcomponent)
-                    : get_string('help', 'core'),
-                $tutorcomponent !== null
-                    ? get_string('shell_settings_label', $tutorcomponent)
-                    : get_string('settings', 'core'),
-                true
-            );
+            ] + $actions;
 
             $pluginpage::open($headerdata, $pluginpage::MODIFIER_READING);
             $pluginshell::content_open();

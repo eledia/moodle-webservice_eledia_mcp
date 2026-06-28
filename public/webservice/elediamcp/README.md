@@ -19,7 +19,7 @@
 <p align="center">
   <a href="https://moodle.org"><img alt="Moodle 4.2+ / 5.x" src="https://img.shields.io/badge/Moodle-4.2%2B%20%E2%80%A2%205.x-003366?logo=moodle&logoColor=white"></a>
   <a href="https://www.php.net"><img alt="PHP 8.1+" src="https://img.shields.io/badge/PHP-8.1%2B-0066b3?logo=php&logoColor=white"></a>
-  <img alt="Maturity: Stable" src="https://img.shields.io/badge/Maturity-Stable%20%C2%B7%20v1.0.0-00834a">
+  <img alt="Maturity: Stable" src="https://img.shields.io/badge/Maturity-Stable%20%C2%B7%20v1.1.0-00834a">
   <img alt="MCP 2025-11-25" src="https://img.shields.io/badge/MCP-2025--11--25%20%E2%80%A2%202025--03--26-6b7280">
   <img alt="Privacy: GDPR ready" src="https://img.shields.io/badge/Privacy-GDPR%20provider-6b7280">
   <a href="LICENSE"><img alt="GPL v3+" src="https://img.shields.io/badge/License-GPL%20v3%2B-0066b3"></a>

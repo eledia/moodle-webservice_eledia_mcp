@@ -67,6 +67,8 @@ $string['disabled'] = 'disabled';
 
 // Plugin metadata.
 $string['pluginname'] = 'Model Context Protocol';
+$string['shell_help_label'] = 'Help for Model Context Protocol';
+$string['shell_settings_label'] = 'Model Context Protocol settings';
 $string['privacy:metadata:webservice_elediamcp_token'] = 'Metadata about MCP web service tokens issued to or on behalf of a user. The token secret itself is never stored here.';
 $string['privacy:metadata:webservice_elediamcp_token:component'] = 'The first-party component that provisioned the token, if any.';
 $string['privacy:metadata:webservice_elediamcp_token:creatorid'] = 'The user who created the token.';

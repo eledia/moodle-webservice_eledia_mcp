@@ -20,6 +20,16 @@ Feature: MCP token self-service management
     When I visit "/user/preferences.php"
     Then I should see "MCP tokens"
 
+  Scenario: The MCP shell help action opens the MCP handbook
+    Given I log in as "admin"
+    When I visit "/webservice/elediamcp/configuration.php"
+    Then the MCP shell help action should target the MCP handbook
+    When I visit "/webservice/elediamcp/help.php"
+    Then I should see "Model Context Protocol help"
+    And I should see "Free and premium tools"
+    And "#block-region-side-pre" "css_element" should not exist
+    And "#theme_boost-drawers-blocks" "css_element" should not exist
+
   Scenario: A user creates a token, sees the value once, and revokes it
     Given I log in as "student1"
     And I visit "/webservice/elediamcp/token/index.php"

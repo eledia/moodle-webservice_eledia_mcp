@@ -49,6 +49,28 @@ use webservice_elediamcp\local\ai\registry;
  */
 class tool_provider {
     /**
+     * AI-native tools available without the premium add-on.
+     *
+     * @var string[]
+     */
+    private const FREE_AI_TOOLS = [
+        'moodle_search_courses',
+        'moodle_search_content',
+        'moodle_create_user',
+        'moodle_me',
+        'moodle_verify_user_context',
+        'moodle_my_courses',
+        'moodle_course_contents',
+        'moodle_get_resource',
+        'moodle_get_announcements',
+        'moodle_calendar_upcoming',
+        'moodle_my_assignments',
+        'moodle_my_grades',
+        'moodle_my_progress',
+        'moodle_quiz_info',
+    ];
+
+    /**
      * Retrieve the full set of tools available to the supplied token.
      *
      * @param string $token External service token.
@@ -58,7 +80,7 @@ class tool_provider {
     public static function get_tools(string $token, string $protocolversion = protocol::LATEST): array {
         $tools = self::get_ai_tools($protocolversion);
 
-        if (security::expose_raw_functions()) {
+        if (premium::has_mcp_tools() && security::expose_raw_functions()) {
             $tools = array_merge($tools, self::get_raw_function_tools($token, $protocolversion));
         }
 
@@ -114,6 +136,10 @@ class tool_provider {
     public static function get_ai_tools(string $protocolversion = protocol::LATEST): array {
         $tools = [];
         foreach (registry::all() as $class) {
+            if (!self::is_ai_tool_available($class::name())) {
+                continue;
+            }
+
             $tool = [
                 'name' => $class::name(),
                 'description' => $class::description(),
@@ -167,7 +193,20 @@ class tool_provider {
      * @return class-string|null
      */
     public static function find_ai_tool(string $name): ?string {
+        if (!self::is_ai_tool_available($name)) {
+            return null;
+        }
         return registry::find($name);
+    }
+
+    /**
+     * Whether the named AI-native tool is available for the current edition.
+     *
+     * @param string $name Tool name.
+     * @return bool
+     */
+    private static function is_ai_tool_available(string $name): bool {
+        return premium::has_mcp_tools() || in_array($name, self::FREE_AI_TOOLS, true);
     }
 
     /**

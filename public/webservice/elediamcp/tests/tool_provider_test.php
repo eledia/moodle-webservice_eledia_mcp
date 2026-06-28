@@ -250,14 +250,24 @@ final class tool_provider_test extends externallib_advanced_testcase {
 
     /**
      * Test get_tools retrieves available functions.
+     *
+     * @runInSeparateProcess
      */
     public function test_get_tools(): void {
         global $DB, $USER;
         $this->resetAfterTest(true);
         $this->setAdminUser();
 
+        if (!class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
+            eval('namespace local_elediaai_tutor_premium; class feature {
+                public static function has_feature(string $feature): bool {
+                    return $feature === "mcp_tools";
+                }
+            }');
+        }
+
         // Raw Moodle Web Service functions are off by default; enable them so the
-        // raw-function side of the catalogue is exercised by this test.
+        // premium raw-function side of the catalogue is exercised by this test.
         set_config('expose_raw_functions', 1, 'webservice_elediamcp');
 
         // Create a test service.

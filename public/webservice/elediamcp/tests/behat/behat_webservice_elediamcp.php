@@ -41,4 +41,18 @@ class behat_webservice_elediamcp extends behat_base {
         $service = $DB->get_record('external_services', ['shortname' => $shortname], 'id', MUST_EXIST);
         set_config('services', (string) $service->id, 'webservice_elediamcp');
     }
+
+    /**
+     * Assert that the Plugin Shell help action links to the MCP handbook.
+     *
+     * @Then /^the MCP shell help action should target the MCP handbook$/
+     */
+    public function the_mcp_shell_help_action_should_target_the_mcp_handbook(): void {
+        $link = $this->getSession()->getPage()->find('css',
+            'a[href*="/webservice/elediamcp/help.php"]');
+
+        if ($link === null) {
+            throw new ExpectationException('MCP shell help action does not target the MCP handbook.', $this->getSession());
+        }
+    }
 }

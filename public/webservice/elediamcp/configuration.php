@@ -157,7 +157,8 @@ foreach ($allservices as $service) {
 
 $usableservices = has_capability('webservice/elediamcp:managetokens', $context) ? $buildusableservices() : [];
 $tokenform = null;
-$newtoken = null;
+$newtoken = $SESSION->webservice_elediamcp_newtoken ?? null;
+unset($SESSION->webservice_elediamcp_newtoken);
 if (has_capability('webservice/elediamcp:managetokens', $context) && !empty($usableservices)) {
     $tokenform = new create_token_form($tokenanchorurl->out(false), ['services' => $usableservices]);
 
@@ -177,7 +178,8 @@ if (has_capability('webservice/elediamcp:managetokens', $context) && !empty($usa
             $validuntil
         );
 
-        $newtoken = $result->token;
+        $SESSION->webservice_elediamcp_newtoken = $result->token;
+        redirect($tokenanchorurl);
     }
 }
 

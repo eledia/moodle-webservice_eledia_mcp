@@ -110,6 +110,15 @@ final class tool_provider_extras_test extends advanced_testcase {
 
         $this->assertContains('moodle_me', $names);
         $this->assertContains('moodle_verify_user_context', $names);
+        $this->assertContains('moodle_search_courses', $names);
+        $this->assertContains('moodle_search_content', $names);
+        $this->assertContains('moodle_create_user', $names);
+        $this->assertNotContains('moodle_find_user', $names);
+        $this->assertNotContains('moodle_send_message', $names);
+        $this->assertNotContains('moodle_create_course', $names);
+        $this->assertNotContains('moodle_enrol_user', $names);
+        $this->assertNull(tool_provider::find_ai_tool('moodle_create_course'));
+        $this->assertNull(tool_provider::find_ai_tool('moodle_enrol_user'));
 
         foreach ($tools as $tool) {
             $this->assertArrayHasKey('inputSchema', $tool);
@@ -123,5 +132,36 @@ final class tool_provider_extras_test extends advanced_testcase {
                 $this->assertArrayNotHasKey('result', $tool['outputSchema']['properties']);
             }
         }
+    }
+
+    /**
+     * Premium add-on unlocks the full AI-native catalogue.
+     *
+     * @runInSeparateProcess
+     */
+    public function test_premium_addon_unlocks_full_ai_catalogue(): void {
+        if (!class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
+            eval('namespace local_elediaai_tutor_premium; class feature {
+                public static function has_feature(string $feature): bool {
+                    return $feature === "mcp_tools";
+                }
+            }');
+        }
+
+        $tools = tool_provider::get_ai_tools(protocol::LATEST);
+        $names = array_column($tools, 'name');
+
+        $this->assertContains('moodle_find_user', $names);
+        $this->assertContains('moodle_send_message', $names);
+        $this->assertContains('moodle_create_course', $names);
+        $this->assertContains('moodle_enrol_user', $names);
+        $this->assertSame(
+            \webservice_elediamcp\local\ai\tools\moodle_create_course::class,
+            tool_provider::find_ai_tool('moodle_create_course')
+        );
+        $this->assertSame(
+            \webservice_elediamcp\local\ai\tools\moodle_enrol_user::class,
+            tool_provider::find_ai_tool('moodle_enrol_user')
+        );
     }
 }

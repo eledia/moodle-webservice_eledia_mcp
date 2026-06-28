@@ -1,3 +1,28 @@
+.path-webservice-elediamcp #theme_boost-drawers-blocks,
+body#page-webservice-elediamcp-configuration #theme_boost-drawers-blocks,
+body#page-webservice-elediamcp-configuration #block-region-side-pre,
+body#page-webservice-elediamcp-configuration .drawer-toggles .drawer-right-toggle,
+body#page-webservice-elediamcp-configuration #page .drawer-right-toggle,
+.path-webservice-elediamcp #block-region-side-pre,
+.path-webservice-elediamcp .drawer-toggles .drawer-right-toggle,
+.path-webservice-elediamcp #page .drawer-right-toggle {
+    display: none !important;
+}
+
+body#page-webservice-elediamcp-configuration,
+body.path-webservice-elediamcp {
+    margin-right: 0 !important;
+    transition: none !important;
+}
+
+body#page-webservice-elediamcp-configuration #page.drawers,
+body#page-webservice-elediamcp-configuration #page.drawers.show-drawer-right,
+body.path-webservice-elediamcp #page.drawers,
+body.path-webservice-elediamcp #page.drawers.show-drawer-right {
+    margin-right: 0 !important;
+    padding-right: 0 !important;
+}
+
 .webservice-elediamcp-form {
     display: grid;
     gap: 0.9rem;

@@ -21,6 +21,7 @@ use webservice_elediamcp\local\ai\registry;
 use webservice_elediamcp\local\ai\tool_exception;
 use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
+use webservice_elediamcp\local\ai\tools\moodle_enrol_user;
 use webservice_elediamcp\local\ai\tools\moodle_me;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
@@ -35,6 +36,7 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @covers      \webservice_elediamcp\local\ai\registry
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_course
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_user
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_enrol_user
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_me
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
@@ -48,6 +50,7 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertContains('moodle_verify_user_context', $names);
         $this->assertContains('moodle_create_user', $names);
         $this->assertContains('moodle_create_course', $names);
+        $this->assertContains('moodle_enrol_user', $names);
 
         $this->assertSame(moodle_me::class, registry::find('moodle_me'));
         $this->assertSame(
@@ -56,6 +59,7 @@ final class ai_tools_test extends advanced_testcase {
         );
         $this->assertSame(moodle_create_user::class, registry::find('moodle_create_user'));
         $this->assertSame(moodle_create_course::class, registry::find('moodle_create_course'));
+        $this->assertSame(moodle_enrol_user::class, registry::find('moodle_enrol_user'));
         $this->assertNull(registry::find('does_not_exist'));
     }
 
@@ -306,5 +310,93 @@ final class ai_tools_test extends advanced_testcase {
             'shortname' => 'DUPLICATE',
             'confirm' => true,
         ], $USER);
+    }
+
+    /**
+     * moodle_enrol_user previews first and enrols only after confirmation.
+     */
+    public function test_moodle_enrol_user_preview_and_confirm(): void {
+        global $DB, $USER;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_user();
+        $args = [
+            'user_id' => (int) $student->id,
+            'course_id' => (int) $course->id,
+            'role_shortname' => 'student',
+        ];
+
+        $preview = moodle_enrol_user::execute($args, $USER);
+        $this->assertFalse($preview['enrolled']);
+        $this->assertTrue($preview['requires_confirmation']);
+        $this->assertFalse($this->is_user_enrolled_in_course((int) $student->id, (int) $course->id));
+
+        $enrolled = moodle_enrol_user::execute($args + ['confirm' => true], $USER);
+        $this->assertTrue($enrolled['enrolled']);
+        $this->assertFalse($enrolled['requires_confirmation']);
+        $this->assertSame((int) $student->id, $enrolled['enrolment']['user_id']);
+        $this->assertSame((int) $course->id, $enrolled['enrolment']['course_id']);
+        $this->assertTrue($this->is_user_enrolled_in_course((int) $student->id, (int) $course->id));
+
+        $studentrole = $DB->get_record('role', ['shortname' => 'student'], 'id', MUST_EXIST);
+        $coursecontext = \core\context\course::instance((int) $course->id);
+        $this->assertTrue(user_has_role_assignment((int) $student->id, (int) $studentrole->id, $coursecontext->id));
+    }
+
+    /**
+     * moodle_enrol_user requires manual enrol capability.
+     */
+    public function test_moodle_enrol_user_requires_capability(): void {
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $caller = $this->getDataGenerator()->create_user();
+        $target = $this->getDataGenerator()->create_user();
+        $this->setUser($caller);
+
+        $this->expectException(\required_capability_exception::class);
+        moodle_enrol_user::execute([
+            'user_id' => (int) $target->id,
+            'course_id' => (int) $course->id,
+            'confirm' => true,
+        ], $caller);
+    }
+
+    /**
+     * moodle_enrol_user rejects already enrolled users.
+     */
+    public function test_moodle_enrol_user_rejects_duplicate_enrolment(): void {
+        global $USER;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user((int) $student->id, (int) $course->id, 'student');
+
+        $this->expectException(tool_exception::class);
+        moodle_enrol_user::execute([
+            'user_id' => (int) $student->id,
+            'course_id' => (int) $course->id,
+            'confirm' => true,
+        ], $USER);
+    }
+
+    /**
+     * Check whether a user has any enrolment record in a course.
+     */
+    private function is_user_enrolled_in_course(int $userid, int $courseid): bool {
+        global $DB;
+
+        return $DB->record_exists_sql(
+            "SELECT 1
+               FROM {user_enrolments} ue
+               JOIN {enrol} e ON e.id = ue.enrolid
+              WHERE ue.userid = :userid
+                AND e.courseid = :courseid",
+            ['userid' => $userid, 'courseid' => $courseid]
+        );
     }
 }
