@@ -288,7 +288,8 @@ class moodle_get_announcements implements ai_tool {
                    AND f.id $inforumsql
                    AND d.timemodified >= :since
               ORDER BY d.timemodified DESC";
-        $rows = $DB->get_records_sql($sql, $params, 0, $limit + 1); // +1 for has_more probe.
+        // Add one extra row for the has_more probe.
+        $rows = $DB->get_records_sql($sql, $params, 0, $limit + 1);
         $total = count($rows);
         $rows = array_slice($rows, 0, $limit);
 

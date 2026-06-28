@@ -69,8 +69,6 @@ class webservice_elediamcp_test_client implements webservice_test_client_interfa
 
         $response = curl_exec($curl);
 
-        curl_close($curl);
-
         return json_decode($response, true);
     }
 }

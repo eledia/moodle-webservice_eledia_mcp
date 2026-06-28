@@ -208,7 +208,6 @@ class moodle_get_resource implements ai_tool {
                 ['cmid' => $cmid]
             );
         }
-        /** @var cm_info $cm */
         $courseid = (int) $course->id;
         $modname = (string) $cm->modname;
         $instanceid = (int) $cm->instance;
@@ -272,7 +271,12 @@ class moodle_get_resource implements ai_tool {
 
         switch ($modname) {
             case 'page':
-                $page = $DB->get_record('page', ['id' => $instanceid], 'id, name, intro, introformat, content, contentformat', IGNORE_MISSING);
+                $page = $DB->get_record(
+                    'page',
+                    ['id' => $instanceid],
+                    'id, name, intro, introformat, content, contentformat',
+                    IGNORE_MISSING
+                );
                 if ($page) {
                     $payload['intro'] = self::plain($page->intro ?? '', (int) ($page->introformat ?? FORMAT_HTML), $textopts);
                     $rendered = self::plain($page->content ?? '', (int) ($page->contentformat ?? FORMAT_HTML), $textopts);
@@ -359,10 +363,12 @@ class moodle_get_resource implements ai_tool {
         global $DB;
 
         $modname = clean_param($modname, PARAM_PLUGIN);
-        if ($modname === ''
+        if (
+            $modname === ''
                 || core_component::get_plugin_directory('mod', $modname) === null
                 || !$DB->record_exists('modules', ['name' => $modname])
-                || !$DB->get_manager()->table_exists($modname)) {
+                || !$DB->get_manager()->table_exists($modname)
+        ) {
             return '';
         }
 
@@ -372,7 +378,7 @@ class moodle_get_resource implements ai_tool {
                 return self::plain((string) $record->intro, (int) ($record->introformat ?? FORMAT_HTML), $textopts);
             }
         } catch (Throwable $ex) {
-            // Unknown table or missing intro column. Ignore.
+            debugging('moodle_get_resource generic intro lookup failed: ' . $ex->getMessage(), DEBUG_DEVELOPER);
         }
         return '';
     }

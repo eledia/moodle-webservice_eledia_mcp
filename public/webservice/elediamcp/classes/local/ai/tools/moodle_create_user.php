@@ -35,14 +35,29 @@ use webservice_elediamcp\local\ai\tool_exception;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class moodle_create_user implements ai_tool {
+    /**
+     * Return the MCP tool name.
+     *
+     * @return string
+     */
     public static function name(): string {
         return 'moodle_create_user';
     }
 
+    /**
+     * Return the human-readable tool title.
+     *
+     * @return string
+     */
     public static function title(): string {
         return 'Create a Moodle user';
     }
 
+    /**
+     * Return the tool description shown to MCP clients.
+     *
+     * @return string
+     */
     public static function description(): string {
         return 'Creates a Moodle user account. This is a write tool and requires the '
             . 'authenticated user to have moodle/user:create at system level. Two-step flow: '
@@ -50,6 +65,11 @@ class moodle_create_user implements ai_tool {
             . 'with confirm=true creates the account. Username and email must be unique.';
     }
 
+    /**
+     * Return the JSON schema for accepted arguments.
+     *
+     * @return array<string, mixed>
+     */
     public static function input_schema(): array {
         return [
             'type' => 'object',
@@ -80,7 +100,8 @@ class moodle_create_user implements ai_tool {
                 'password' => [
                     'type' => 'string',
                     'minLength' => 8,
-                    'description' => 'Optional initial password. If omitted, Moodle creates the account with auth manual and no known password.',
+                    'description' => 'Optional initial password. If omitted, Moodle creates the account with auth manual '
+                        . 'and no known password.',
                 ],
                 'auth' => [
                     'type' => 'string',
@@ -107,6 +128,11 @@ class moodle_create_user implements ai_tool {
         ];
     }
 
+    /**
+     * Return the JSON schema for tool output.
+     *
+     * @return array<string, mixed>
+     */
     public static function output_schema(): array {
         return [
             'type' => 'object',
@@ -139,6 +165,11 @@ class moodle_create_user implements ai_tool {
         ];
     }
 
+    /**
+     * Return MCP annotations for this tool.
+     *
+     * @return array<string, mixed>
+     */
     public static function annotations(): array {
         return [
             'title' => self::title(),
@@ -149,6 +180,13 @@ class moodle_create_user implements ai_tool {
         ];
     }
 
+    /**
+     * Execute the tool for the authenticated user.
+     *
+     * @param array<string, mixed> $arguments Tool arguments.
+     * @param stdClass $user Authenticated Moodle user.
+     * @return array<string, mixed>
+     */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG, $DB;
 

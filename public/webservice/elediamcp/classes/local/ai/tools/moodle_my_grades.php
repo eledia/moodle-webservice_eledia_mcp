@@ -242,7 +242,7 @@ class moodle_my_grades implements ai_tool {
                             $haspassed = $finalgrade >= $passgrade;
                         }
                     } else {
-                        // grade === false means needsupdate / not yet calculated.
+                        // Grade === false means needsupdate / not yet calculated.
                         $rawstr = (string) ($info->str_grade ?? '-');
                         $errorstr = get_string('error');
                         $finalstr = ($rawstr === $errorstr || $rawstr === '-')

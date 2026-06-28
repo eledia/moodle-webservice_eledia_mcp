@@ -318,8 +318,11 @@ class moodle_forum_discussions implements ai_tool {
                 continue;
             }
 
-            $discussions = $DB->get_records('forum_discussions', ['forum' => (int) $forum->id],
-                'timemodified DESC');
+            $discussions = $DB->get_records(
+                'forum_discussions',
+                ['forum' => (int) $forum->id],
+                'timemodified DESC'
+            );
             $firstpostids = array_values(array_filter(array_map(
                 static fn($discussion): int => (int) $discussion->firstpost,
                 $discussions
@@ -359,8 +362,10 @@ class moodle_forum_discussions implements ai_tool {
                         : (int) $discussion->timemodified),
                     'last_post_iso' => gmdate('c', (int) $discussion->timemodified),
                     'reply_count' => (int) $replycount,
-                    'url' => (new moodle_url('/mod/forum/discuss.php',
-                        ['d' => (int) $discussion->id]))->out(false),
+                    'url' => (new moodle_url(
+                        '/mod/forum/discuss.php',
+                        ['d' => (int) $discussion->id]
+                    ))->out(false),
                 ];
             }
         }
@@ -404,8 +409,10 @@ class moodle_forum_discussions implements ai_tool {
 
         $discussion = $DB->get_record('forum_discussions', ['id' => $discussionid]);
         if (!$discussion) {
-            throw new tool_exception("Discussion {$discussionid} not found.",
-                ['discussion_id' => $discussionid]);
+            throw new tool_exception(
+                "Discussion {$discussionid} not found.",
+                ['discussion_id' => $discussionid]
+            );
         }
         $cm = get_coursemodule_from_instance('forum', (int) $discussion->forum, 0, false, MUST_EXIST);
         [$forum, $cm] = self::resolve_forum((int) $cm->id, $user);
@@ -413,8 +420,10 @@ class moodle_forum_discussions implements ai_tool {
 
         require_capability('mod/forum:viewdiscussion', $context, (int) $user->id);
         if (!forum_user_can_see_discussion($forum, $discussion, $context, $user)) {
-            throw new tool_exception("Discussion {$discussionid} is not visible to you.",
-                ['discussion_id' => $discussionid]);
+            throw new tool_exception(
+                "Discussion {$discussionid} is not visible to you.",
+                ['discussion_id' => $discussionid]
+            );
         }
 
         $stringopts = ['context' => context_system::instance(), 'filter' => false, 'escape' => true];
@@ -449,8 +458,11 @@ class moodle_forum_discussions implements ai_tool {
             'limit' => $limit,
             'offset' => $offset,
             'has_more' => ($offset + $limit) < $total,
-            'summary' => sprintf('Discussion "%s" with %d visible post(s).',
-                format_string((string) $discussion->name, true, $stringopts), $total),
+            'summary' => sprintf(
+                'Discussion "%s" with %d visible post(s).',
+                format_string((string) $discussion->name, true, $stringopts),
+                $total
+            ),
         ];
     }
 
@@ -468,12 +480,16 @@ class moodle_forum_discussions implements ai_tool {
         // Course-access gate before module visibility: uservisible does not
         // check course enrolment/visibility (see moodle_get_resource).
         if (!is_siteadmin($user) && !can_access_course($course, $user)) {
-            throw new tool_exception("No forum with cmid {$cmid} is visible to you.",
-                ['cmid' => $cmid]);
+            throw new tool_exception(
+                "No forum with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]
+            );
         }
         if (!$cminfo->uservisible) {
-            throw new tool_exception("No forum with cmid {$cmid} is visible to you.",
-                ['cmid' => $cmid]);
+            throw new tool_exception(
+                "No forum with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]
+            );
         }
         $forum = $DB->get_record('forum', ['id' => (int) $cminfo->instance], '*', MUST_EXIST);
         return [$forum, $cminfo, $course];

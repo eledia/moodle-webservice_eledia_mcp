@@ -20,8 +20,6 @@ namespace webservice_elediamcp\form;
 
 use moodleform;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Self-service form for creating an MCP token.
  *

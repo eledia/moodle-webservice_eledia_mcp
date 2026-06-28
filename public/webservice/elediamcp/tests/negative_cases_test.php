@@ -97,8 +97,11 @@ final class negative_cases_test extends advanced_testcase {
             }
         }
         $this->assertContains((int) $visiblepage->cmid, $cmids);
-        $this->assertNotContains((int) $hiddenpage->cmid, $cmids,
-            'A hidden activity must not be listed for a student.');
+        $this->assertNotContains(
+            (int) $hiddenpage->cmid,
+            $cmids,
+            'A hidden activity must not be listed for a student.'
+        );
         $this->assertSame(2, $output['total_modules']);
         $this->assertSame(1, $output['filtered_modules']);
         $this->assertNotEmpty($output['sections'], 'Visible section structure must survive.');
@@ -167,8 +170,11 @@ final class negative_cases_test extends advanced_testcase {
         $output = moodle_search_courses::execute(['query' => 'Zebraquux'], $student);
 
         $ids = array_column($output['courses'], 'id');
-        $this->assertNotContains((int) $hidden->id, $ids,
-            'A hidden course must not appear in search results for a student.');
+        $this->assertNotContains(
+            (int) $hidden->id,
+            $ids,
+            'A hidden course must not appear in search results for a student.'
+        );
         $this->assertSame(0, $output['total']);
     }
 
@@ -229,8 +235,11 @@ final class negative_cases_test extends advanced_testcase {
 
         $cmids = array_column($output['assignments'], 'cmid');
         $this->assertContains((int) $visible->cmid, $cmids);
-        $this->assertNotContains((int) $hidden->cmid, $cmids,
-            'A hidden assignment must not be listed for a student.');
+        $this->assertNotContains(
+            (int) $hidden->cmid,
+            $cmids,
+            'A hidden assignment must not be listed for a student.'
+        );
         $this->assertSame(1, $output['total']);
     }
 
@@ -290,8 +299,11 @@ final class negative_cases_test extends advanced_testcase {
         $subjects = array_column($output['announcements'], 'subject');
         $courseids = array_column($output['announcements'], 'course_id');
         $this->assertContains('Welcome to my course', $subjects);
-        $this->assertNotContains('Secret foreign announcement xyzzy', $subjects,
-            'Announcements of foreign courses must never appear.');
+        $this->assertNotContains(
+            'Secret foreign announcement xyzzy',
+            $subjects,
+            'Announcements of foreign courses must never appear.'
+        );
         $this->assertNotContains((int) $foreigncourse->id, $courseids);
 
         // Explicitly requesting the foreign course is rejected.
@@ -325,8 +337,11 @@ final class negative_cases_test extends advanced_testcase {
 
         $names = array_column($output['events'], 'name');
         $this->assertContains('My course exam', $names);
-        $this->assertNotContains('Foreign secret meeting xyzzy', $names,
-            'Course events of foreign courses must never appear.');
+        $this->assertNotContains(
+            'Foreign secret meeting xyzzy',
+            $names,
+            'Course events of foreign courses must never appear.'
+        );
     }
 
     /**
@@ -345,8 +360,11 @@ final class negative_cases_test extends advanced_testcase {
 
         // No shared course: the privacy boundary hides the user entirely.
         $output = moodle_find_user::execute(['query' => 'Zebrafinch'], $searcher);
-        $this->assertSame(0, $output['total_matches'],
-            'A user sharing no course must not be findable when messagingallusers is off.');
+        $this->assertSame(
+            0,
+            $output['total_matches'],
+            'A user sharing no course must not be findable when messagingallusers is off.'
+        );
         $this->assertSame([], $output['contacts']);
         $this->assertSame([], $output['noncontacts']);
 
@@ -383,8 +401,11 @@ final class negative_cases_test extends advanced_testcase {
         $this->assertTrue($output['requires_confirmation']);
         $this->assertNull($output['message_id']);
         $this->assertNull($output['conversation_id']);
-        $this->assertSame($before, $DB->count_records('messages'),
-            'A preview call must not create any message rows.');
+        $this->assertSame(
+            $before,
+            $DB->count_records('messages'),
+            'A preview call must not create any message rows.'
+        );
     }
 
     /**
@@ -422,8 +443,11 @@ final class negative_cases_test extends advanced_testcase {
             $this->assertStringContainsString('deleted', $e->getMessage());
         }
 
-        $this->assertSame(0, $DB->count_records('messages'),
-            'Rejected sends must not create any message rows.');
+        $this->assertSame(
+            0,
+            $DB->count_records('messages'),
+            'Rejected sends must not create any message rows.'
+        );
     }
 
     /**
@@ -441,7 +465,10 @@ final class negative_cases_test extends advanced_testcase {
 
         $this->assertTrue($output['valid']);
         $this->assertArrayHasKey('capabilities', $output);
-        $this->assertSame([], $output['capabilities'],
-            'Without webservice/elediamcp:viewcaps no capability list may be exported.');
+        $this->assertSame(
+            [],
+            $output['capabilities'],
+            'Without webservice/elediamcp:viewcaps no capability list may be exported.'
+        );
     }
 }

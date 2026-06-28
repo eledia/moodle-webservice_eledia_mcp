@@ -259,11 +259,7 @@ final class tool_provider_test extends externallib_advanced_testcase {
         $this->setAdminUser();
 
         if (!class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
-            eval('namespace local_elediaai_tutor_premium; class feature {
-                public static function has_feature(string $feature): bool {
-                    return $feature === "mcp_tools";
-                }
-            }');
+            require_once(__DIR__ . '/fixtures/local_elediaai_tutor_premium/classes/feature.php');
         }
 
         // Raw Moodle Web Service functions are off by default; enable them so the
@@ -324,8 +320,10 @@ final class tool_provider_test extends externallib_advanced_testcase {
 
         // Canonical output schema (no {result: ...} wrapper) is used by default.
         $this->assertIsArray($rawtool['outputSchema']);
-        if (isset($rawtool['outputSchema']['properties'])
-            && is_array($rawtool['outputSchema']['properties'])) {
+        if (
+            isset($rawtool['outputSchema']['properties'])
+            && is_array($rawtool['outputSchema']['properties'])
+        ) {
             $this->assertArrayNotHasKey('result', $rawtool['outputSchema']['properties']);
         }
 

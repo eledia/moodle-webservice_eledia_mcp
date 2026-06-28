@@ -24,8 +24,6 @@
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Run the MCP plugin upgrade steps.
  *
@@ -38,7 +36,6 @@ function xmldb_webservice_elediamcp_upgrade($oldversion): bool {
     $dbman = $DB->get_manager();
 
     if ($oldversion < 2026060904) {
-
         // Define table webservice_elediamcp_token to be created.
         $table = new xmldb_table('webservice_elediamcp_token');
 

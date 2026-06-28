@@ -54,8 +54,11 @@ final class security_test extends advanced_testcase {
     public function test_origin_cross_origin_requires_allow_list(): void {
         $this->assertFalse(security::is_origin_allowed('https://evil.example.com'));
 
-        set_config('allowed_origins', "https://app.example.com\nhttps://other.example.com",
-            'webservice_elediamcp');
+        set_config(
+            'allowed_origins',
+            "https://app.example.com\nhttps://other.example.com",
+            'webservice_elediamcp'
+        );
 
         $this->assertTrue(security::is_origin_allowed('https://app.example.com'));
         $this->assertTrue(security::is_origin_allowed('https://other.example.com'));

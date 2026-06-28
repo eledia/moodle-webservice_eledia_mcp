@@ -166,18 +166,24 @@ class moodle_my_submission_files implements ai_tool {
         try {
             [$course, $cminfo] = get_course_and_cm_from_cmid($cmid, 'assign', 0, $userid);
         } catch (\moodle_exception $e) {
-            throw new tool_exception("No assignment with cmid {$cmid} is visible to you.",
-                ['cmid' => $cmid]);
+            throw new tool_exception(
+                "No assignment with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]
+            );
         }
         // Course-access gate before module visibility: uservisible does not
         // check course enrolment/visibility (see moodle_get_resource).
         if (!is_siteadmin($user) && !can_access_course($course, $user)) {
-            throw new tool_exception("No assignment with cmid {$cmid} is visible to you.",
-                ['cmid' => $cmid]);
+            throw new tool_exception(
+                "No assignment with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]
+            );
         }
         if (!$cminfo->uservisible) {
-            throw new tool_exception("No assignment with cmid {$cmid} is visible to you.",
-                ['cmid' => $cmid]);
+            throw new tool_exception(
+                "No assignment with cmid {$cmid} is visible to you.",
+                ['cmid' => $cmid]
+            );
         }
 
         $stringopts = ['context' => context_system::instance(), 'filter' => false, 'escape' => true];
@@ -208,16 +214,29 @@ class moodle_my_submission_files implements ai_tool {
         $context = context_module::instance($cmid);
         $fs = get_file_storage();
         $files = [];
-        foreach ($fs->get_area_files($context->id, 'assignsubmission_file', 'submission_files',
-                (int) $submission->id, 'filename', false) as $file) {
+        foreach (
+            $fs->get_area_files(
+                $context->id,
+                'assignsubmission_file',
+                'submission_files',
+                (int) $submission->id,
+                'filename',
+                false
+            ) as $file
+        ) {
             $files[] = [
                 'filename' => $file->get_filename(),
                 'size_bytes' => (int) $file->get_filesize(),
                 'mimetype' => (string) $file->get_mimetype(),
                 'modified_iso' => gmdate('c', (int) $file->get_timemodified()),
-                'url' => moodle_url::make_pluginfile_url($context->id, 'assignsubmission_file',
-                    'submission_files', (int) $submission->id, $file->get_filepath(),
-                    $file->get_filename())->out(false),
+                'url' => moodle_url::make_pluginfile_url(
+                    $context->id,
+                    'assignsubmission_file',
+                    'submission_files',
+                    (int) $submission->id,
+                    $file->get_filepath(),
+                    $file->get_filename()
+                )->out(false),
             ];
         }
 
@@ -227,8 +246,10 @@ class moodle_my_submission_files implements ai_tool {
             'submission' => (int) $submission->id,
         ], '*', IGNORE_MISSING);
         if ($textrow && trim((string) $textrow->onlinetext) !== '') {
-            $onlinetext = content_to_text((string) $textrow->onlinetext,
-                (int) ($textrow->onlineformat ?? FORMAT_HTML));
+            $onlinetext = content_to_text(
+                (string) $textrow->onlinetext,
+                (int) ($textrow->onlineformat ?? FORMAT_HTML)
+            );
             if (\core_text::strlen($onlinetext) > self::TEXT_LENGTH) {
                 $onlinetext = \core_text::substr($onlinetext, 0, self::TEXT_LENGTH) . ' …';
             }
@@ -244,9 +265,13 @@ class moodle_my_submission_files implements ai_tool {
             'onlinetext' => $onlinetext,
             'assignment_name' => $assignname,
             'url' => $assignurl,
-            'summary' => sprintf('"%s": status %s with %d file(s)%s.', $assignname,
-                (string) $submission->status, count($files),
-                $onlinetext !== null ? ' and an online-text submission' : ''),
+            'summary' => sprintf(
+                '"%s": status %s with %d file(s)%s.',
+                $assignname,
+                (string) $submission->status,
+                count($files),
+                $onlinetext !== null ? ' and an online-text submission' : ''
+            ),
         ];
     }
 }

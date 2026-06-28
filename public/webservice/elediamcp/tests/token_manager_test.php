@@ -231,8 +231,12 @@ final class token_manager_test extends advanced_testcase {
 
         $first = token_manager::create_token($user->id, $serviceid, 'First');
         $second = token_manager::create_token($user->id, $serviceid, 'Second');
-        $DB->set_field('external_tokens', 'lastaccess', 1700000000,
-            ['id' => $second->record->externaltokenid]);
+        $DB->set_field(
+            'external_tokens',
+            'lastaccess',
+            1700000000,
+            ['id' => $second->record->externaltokenid]
+        );
 
         $tokens = token_manager::get_user_tokens($user->id);
         $this->assertCount(2, $tokens);

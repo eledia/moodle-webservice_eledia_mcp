@@ -236,14 +236,19 @@ class moodle_my_progress implements ai_tool {
                 $completed = 0;
                 $total = 0;
                 foreach ($modinfo->get_cms() as $cm) {
-                    if (!$cm->uservisible
-                            || (int) $completion->is_enabled($cm) === COMPLETION_TRACKING_NONE) {
+                    if (
+                        !$cm->uservisible
+                            || (int) $completion->is_enabled($cm) === COMPLETION_TRACKING_NONE
+                    ) {
                         continue;
                     }
                     $total++;
                     $state = (int) $completion->get_data($cm, false, $userid)->completionstate;
-                    $iscomplete = in_array($state,
-                        [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS], true);
+                    $iscomplete = in_array(
+                        $state,
+                        [COMPLETION_COMPLETE, COMPLETION_COMPLETE_PASS],
+                        true
+                    );
                     if ($iscomplete) {
                         $completed++;
                     }
@@ -295,11 +300,18 @@ class moodle_my_progress implements ai_tool {
             if (!$entry['completion_enabled']) {
                 return sprintf('"%s" has completion tracking disabled.', $entry['course_name']);
             }
-            return sprintf('"%s": %d of %d tracked activities completed (%s%%).',
-                $entry['course_name'], (int) $entry['completed_count'], (int) $entry['total_count'],
-                $entry['progress_percent'] ?? 0);
+            return sprintf(
+                '"%s": %d of %d tracked activities completed (%s%%).',
+                $entry['course_name'],
+                (int) $entry['completed_count'],
+                (int) $entry['total_count'],
+                $entry['progress_percent'] ?? 0
+            );
         }
-        return sprintf('Progress for %d enrolled course(s), %d with completion tracking enabled.',
-            count($courses), $trackedcourses);
+        return sprintf(
+            'Progress for %d enrolled course(s), %d with completion tracking enabled.',
+            count($courses),
+            $trackedcourses
+        );
     }
 }

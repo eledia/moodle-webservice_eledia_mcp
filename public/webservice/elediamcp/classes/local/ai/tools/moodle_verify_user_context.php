@@ -373,8 +373,13 @@ class moodle_verify_user_context implements ai_tool {
         $rolelabel = empty($roles) ? '' : sprintf(' (roles: %s)', implode(', ', $roles));
         $adminlabel = $isadmin ? ', site administrator' : '';
         $countlabel = $coursecount === 1 ? '1 active course' : ($coursecount . ' active courses');
-        return sprintf('You are authenticated as %s%s with access to %s%s.',
-            $name, $adminlabel, $countlabel, $rolelabel);
+        return sprintf(
+            'You are authenticated as %s%s with access to %s%s.',
+            $name,
+            $adminlabel,
+            $countlabel,
+            $rolelabel
+        );
     }
 
     /**

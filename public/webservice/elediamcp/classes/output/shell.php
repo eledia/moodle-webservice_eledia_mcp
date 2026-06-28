@@ -21,8 +21,6 @@ namespace webservice_elediamcp\output;
 use html_writer;
 use moodle_url;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Shell wrapper for plugin-owned MCP pages.
  *
@@ -243,8 +241,10 @@ final class shell {
                 'class' => 'lh-plugin-section-nav__item',
                 'href' => $item['url']->out(false),
             ];
-            if ($item['key'] === self::ACTIVE_ELEDIAMCP
-                    && in_array($active, [self::ACTIVE_ELEDIAMCP, self::ACTIVE_TOKENS], true)) {
+            if (
+                $item['key'] === self::ACTIVE_ELEDIAMCP
+                    && in_array($active, [self::ACTIVE_ELEDIAMCP, self::ACTIVE_TOKENS], true)
+            ) {
                 $attrs['aria-current'] = 'page';
             }
             $label = html_writer::tag('i', '', [

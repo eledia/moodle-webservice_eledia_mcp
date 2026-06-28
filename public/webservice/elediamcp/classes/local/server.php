@@ -134,7 +134,7 @@ class server extends webservice_base_server {
             die;
         }
 
-        // tools/call: AI-native tool path first, then fall through to parent for raw WS.
+        // Tools/call: AI-native tool path first, then fall through to parent for raw WS.
         $aiclass = tool_provider::find_ai_tool((string) $this->functionname);
         if ($aiclass !== null) {
             $this->authenticate_user();
@@ -808,7 +808,7 @@ class server extends webservice_base_server {
             $this->log_exception_for_debug($ex);
         }
 
-        // tools/call: surface as an isError result.
+        // Tools/call: surface as an isError result.
         if (!empty($this->functionname) && $ex !== null) {
             $name = (string) $this->functionname;
             $this->emit_tool_result(['error' => $ex->getMessage()], true, $ex->getMessage());
@@ -852,7 +852,7 @@ class server extends webservice_base_server {
             $result['isError'] = true;
         }
 
-        // structuredContent is required when a tool defines an outputSchema.
+        // StructuredContent is required when a tool defines an outputSchema.
         $result['structuredContent'] = $structuredcontent;
 
         echo $this->safe_json_encode([

@@ -177,8 +177,10 @@ class moodle_search_content implements ai_tool {
     public static function execute(array $arguments, stdClass $user): array {
         $query = trim((string) ($arguments['query'] ?? ''));
         if (\core_text::strlen($query) < 2) {
-            throw new tool_exception('The search query must be at least 2 characters long.',
-                ['query' => $query]);
+            throw new tool_exception(
+                'The search query must be at least 2 characters long.',
+                ['query' => $query]
+            );
         }
         $courseid = isset($arguments['course_id']) ? (int) $arguments['course_id'] : 0;
         $limit = isset($arguments['limit'])
@@ -188,8 +190,10 @@ class moodle_search_content implements ai_tool {
         if ($courseid > 0) {
             $usercourses = enrol_get_users_courses((int) $user->id, true, ['id']);
             if (!isset($usercourses[$courseid]) && !is_siteadmin($user)) {
-                throw new tool_exception("You are not enrolled in course {$courseid}.",
-                    ['course_id' => $courseid]);
+                throw new tool_exception(
+                    "You are not enrolled in course {$courseid}.",
+                    ['course_id' => $courseid]
+                );
             }
         }
 
@@ -217,7 +221,7 @@ class moodle_search_content implements ai_tool {
      * @return array<string, mixed>
      */
     private static function global_search(string $query, int $courseid, int $limit): array {
-        // core_search\manager::search() accepts a stdClass with the same fields
+        // Core_search\manager::search() accepts a stdClass with the same fields
         // as the search form data object. This mirrors Moodle's internal search
         // form payload without depending on UI form classes.
         $formdata = new stdClass();

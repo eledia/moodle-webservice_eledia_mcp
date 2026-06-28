@@ -318,8 +318,12 @@ class moodle_quiz_info implements ai_tool {
             ];
 
             if ($cmidfilter > 0) {
-                $attempts = self::attempt_history((int) $r->quizid, $userid,
-                    (float) ($r->sumgrades ?? 0), $grademax);
+                $attempts = self::attempt_history(
+                    (int) $r->quizid,
+                    $userid,
+                    (float) ($r->sumgrades ?? 0),
+                    $grademax
+                );
             }
         }
 

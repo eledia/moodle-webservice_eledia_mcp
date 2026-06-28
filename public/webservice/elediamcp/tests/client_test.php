@@ -20,8 +20,6 @@ use advanced_testcase;
 use ReflectionClass;
 use ReflectionMethod;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Tests for MCP client class.
  *

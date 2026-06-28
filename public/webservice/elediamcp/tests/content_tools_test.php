@@ -84,7 +84,9 @@ final class content_tools_test extends advanced_testcase {
 
         $this->expectException(tool_exception::class);
         moodle_search_content::execute(
-            ['query' => 'anything', 'course_id' => (int) $course->id], $stranger);
+            ['query' => 'anything', 'course_id' => (int) $course->id],
+            $stranger
+        );
     }
 
     /**

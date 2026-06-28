@@ -62,7 +62,9 @@ final class learner_tools_test extends advanced_testcase {
         $completion->update_state($cm1, COMPLETION_COMPLETE, (int) $user->id);
 
         $output = moodle_my_progress::execute(
-            ['course_id' => (int) $course->id, 'include_activities' => true], $user);
+            ['course_id' => (int) $course->id, 'include_activities' => true],
+            $user
+        );
 
         $this->assertCount(1, $output['courses']);
         $entry = $output['courses'][0];
@@ -210,7 +212,9 @@ final class learner_tools_test extends advanced_testcase {
         $this->assertNotEmpty($list['forums']);
 
         $posts = moodle_forum_discussions::execute(
-            ['discussion_id' => (int) $discussion->id], $student);
+            ['discussion_id' => (int) $discussion->id],
+            $student
+        );
         $this->assertSame(2, $posts['total']);
         $reply = $posts['posts'][1];
         $this->assertSame('Re: Week 1 questions', $reply['subject']);
@@ -250,7 +254,9 @@ final class learner_tools_test extends advanced_testcase {
         $posts = null;
         try {
             $posts = moodle_forum_discussions::execute(
-                ['discussion_id' => (int) $discussion->id], $student);
+                ['discussion_id' => (int) $discussion->id],
+                $student
+            );
         } catch (tool_exception $e) {
             $this->assertStringContainsString('not visible', $e->getMessage());
         }

@@ -46,7 +46,6 @@ class provider implements
     \core_privacy\local\metadata\provider,
     \core_privacy\local\request\core_userlist_provider,
     \core_privacy\local\request\plugin\provider {
-
     /**
      * Describe the personal data stored by this plugin.
      *
@@ -102,8 +101,11 @@ class provider implements
         }
         $userlist->add_from_sql('userid', 'SELECT userid FROM {webservice_elediamcp_token}', []);
         $userlist->add_from_sql('creatorid', 'SELECT creatorid FROM {webservice_elediamcp_token}', []);
-        $userlist->add_from_sql('revokedby',
-            'SELECT revokedby FROM {webservice_elediamcp_token} WHERE revokedby IS NOT NULL', []);
+        $userlist->add_from_sql(
+            'revokedby',
+            'SELECT revokedby FROM {webservice_elediamcp_token} WHERE revokedby IS NOT NULL',
+            []
+        );
     }
 
     /**
@@ -225,8 +227,13 @@ class provider implements
         }
         $db->delete_records('webservice_elediamcp_token', ['userid' => $userid]);
         $db->set_field('webservice_elediamcp_token', 'creatorid', 0, ['creatorid' => $userid]);
-        $db->set_field_select('webservice_elediamcp_token', 'revokedby', null, 'revokedby = :userid',
-            ['userid' => $userid]);
+        $db->set_field_select(
+            'webservice_elediamcp_token',
+            'revokedby',
+            null,
+            'revokedby = :userid',
+            ['userid' => $userid]
+        );
     }
 
     /**
