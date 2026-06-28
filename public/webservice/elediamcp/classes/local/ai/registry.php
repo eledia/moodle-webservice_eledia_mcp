@@ -22,9 +22,11 @@ use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
 use webservice_elediamcp\local\ai\tools\moodle_course_contents;
 use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
+use webservice_elediamcp\local\ai\tools\moodle_due_work;
 use webservice_elediamcp\local\ai\tools\moodle_enrol_user;
 use webservice_elediamcp\local\ai\tools\moodle_find_user;
 use webservice_elediamcp\local\ai\tools\moodle_forum_discussions;
+use webservice_elediamcp\local\ai\tools\moodle_grading_queue;
 use webservice_elediamcp\local\ai\tools\moodle_get_announcements;
 use webservice_elediamcp\local\ai\tools\moodle_get_resource;
 use webservice_elediamcp\local\ai\tools\moodle_me;
@@ -37,6 +39,7 @@ use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
 use webservice_elediamcp\local\ai\tools\moodle_search_content;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
+use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
 use webservice_elediamcp\local\ai\tools\moodle_update_course;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
@@ -81,11 +84,15 @@ class registry {
             moodle_forum_discussions::class,
             moodle_calendar_upcoming::class,
             // Learner progress.
+            moodle_due_work::class,
             moodle_my_assignments::class,
             moodle_my_grades::class,
             moodle_my_progress::class,
             moodle_quiz_info::class,
             moodle_my_submission_files::class,
+            // Teacher workflows.
+            moodle_grading_queue::class,
+            moodle_unanswered_forum_posts::class,
             // Write tools (require confirm).
             moodle_send_message::class,
             moodle_create_user::class,

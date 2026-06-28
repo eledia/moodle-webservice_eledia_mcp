@@ -21,8 +21,11 @@ use webservice_elediamcp\local\ai\registry;
 use webservice_elediamcp\local\ai\tool_exception;
 use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
+use webservice_elediamcp\local\ai\tools\moodle_due_work;
 use webservice_elediamcp\local\ai\tools\moodle_enrol_user;
+use webservice_elediamcp\local\ai\tools\moodle_grading_queue;
 use webservice_elediamcp\local\ai\tools\moodle_me;
+use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
 use webservice_elediamcp\local\ai\tools\moodle_update_course;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
@@ -37,9 +40,12 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @covers      \webservice_elediamcp\local\ai\registry
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_course
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_user
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_due_work
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_enrol_user
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_grading_queue
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_update_course
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_me
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
 final class ai_tools_test extends advanced_testcase {
@@ -54,6 +60,9 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertContains('moodle_create_course', $names);
         $this->assertContains('moodle_update_course', $names);
         $this->assertContains('moodle_enrol_user', $names);
+        $this->assertContains('moodle_due_work', $names);
+        $this->assertContains('moodle_grading_queue', $names);
+        $this->assertContains('moodle_unanswered_forum_posts', $names);
 
         $this->assertSame(moodle_me::class, registry::find('moodle_me'));
         $this->assertSame(
@@ -64,6 +73,9 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertSame(moodle_create_course::class, registry::find('moodle_create_course'));
         $this->assertSame(moodle_update_course::class, registry::find('moodle_update_course'));
         $this->assertSame(moodle_enrol_user::class, registry::find('moodle_enrol_user'));
+        $this->assertSame(moodle_due_work::class, registry::find('moodle_due_work'));
+        $this->assertSame(moodle_grading_queue::class, registry::find('moodle_grading_queue'));
+        $this->assertSame(moodle_unanswered_forum_posts::class, registry::find('moodle_unanswered_forum_posts'));
         $this->assertNull(registry::find('does_not_exist'));
     }
 

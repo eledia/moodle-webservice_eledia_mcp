@@ -19,9 +19,12 @@ namespace webservice_elediamcp;
 use advanced_testcase;
 use completion_info;
 use webservice_elediamcp\local\ai\tool_exception;
+use webservice_elediamcp\local\ai\tools\moodle_due_work;
 use webservice_elediamcp\local\ai\tools\moodle_forum_discussions;
+use webservice_elediamcp\local\ai\tools\moodle_grading_queue;
 use webservice_elediamcp\local\ai\tools\moodle_my_progress;
 use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
+use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
 
 /**
  * Tests for the learner-progress AI tools added in 0.9.0, including
@@ -35,6 +38,9 @@ use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_my_progress
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_quiz_info
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_forum_discussions
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_due_work
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_grading_queue
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts
  */
 final class learner_tools_test extends advanced_testcase {
     /**
@@ -267,5 +273,95 @@ final class learner_tools_test extends advanced_testcase {
         $this->setUser($stranger);
         $this->expectException(tool_exception::class);
         moodle_forum_discussions::execute(['course_id' => (int) $course->id], $stranger);
+    }
+
+    /**
+     * Due work combines visible assignment due dates into a learner briefing.
+     */
+    public function test_due_work_lists_due_assignment(): void {
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'name' => 'Reflection task',
+            'duedate' => time() + DAYSECS,
+        ]);
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $this->setUser($student);
+
+        $output = moodle_due_work::execute([
+            'course_id' => (int) $course->id,
+            'days_ahead' => 3,
+            'include_calendar' => false,
+        ], $student);
+
+        $this->assertNotEmpty($output['items']);
+        $this->assertSame('assignment', $output['items'][0]['type']);
+        $this->assertSame('Reflection task', $output['items'][0]['title']);
+        $this->assertSame((int) $assign->course, $output['items'][0]['course_id']);
+        $this->assertGreaterThanOrEqual(1, $output['due_soon_count']);
+    }
+
+    /**
+     * The teacher grading queue reports submitted assignments that still need grading.
+     */
+    public function test_grading_queue_lists_submitted_assignments(): void {
+        global $DB;
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $assign = $this->getDataGenerator()->create_module('assign', [
+            'course' => $course->id,
+            'name' => 'Essay to grade',
+        ]);
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+        $now = time();
+        $DB->insert_record('assign_submission', (object) [
+            'assignment' => $assign->id,
+            'userid' => $student->id,
+            'attemptnumber' => 0,
+            'latest' => 1,
+            'status' => 'submitted',
+            'timecreated' => $now - 100,
+            'timemodified' => $now - 50,
+        ]);
+
+        $this->setUser($teacher);
+        $output = moodle_grading_queue::execute(['course_id' => (int) $course->id], $teacher);
+
+        $this->assertSame(1, $output['total_needing_grading']);
+        $this->assertCount(1, $output['assignments']);
+        $this->assertSame('Essay to grade', $output['assignments'][0]['name']);
+        $this->assertSame(1, $output['assignments'][0]['needs_grading_count']);
+    }
+
+    /**
+     * Teachers can ask for visible forum discussions that have no replies.
+     */
+    public function test_unanswered_forum_posts_lists_open_discussions(): void {
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $forum = $this->getDataGenerator()->create_module('forum', ['course' => $course->id]);
+        $teacher = $this->getDataGenerator()->create_and_enrol($course, 'editingteacher');
+        $student = $this->getDataGenerator()->create_and_enrol($course, 'student');
+
+        /** @var \mod_forum_generator $fg */
+        $fg = $this->getDataGenerator()->get_plugin_generator('mod_forum');
+        $discussion = $fg->create_discussion((object) [
+            'course' => $course->id,
+            'forum' => $forum->id,
+            'userid' => $student->id,
+            'name' => 'Question without answer',
+        ]);
+
+        $this->setUser($teacher);
+        $output = moodle_unanswered_forum_posts::execute(['course_id' => (int) $course->id], $teacher);
+
+        $this->assertSame(1, $output['total']);
+        $this->assertSame((int) $discussion->id, $output['discussions'][0]['discussion_id']);
+        $this->assertSame('Question without answer', $output['discussions'][0]['subject']);
     }
 }

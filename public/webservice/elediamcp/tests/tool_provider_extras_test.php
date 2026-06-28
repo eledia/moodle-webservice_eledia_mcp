@@ -113,14 +113,19 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertContains('moodle_search_courses', $names);
         $this->assertContains('moodle_search_content', $names);
         $this->assertContains('moodle_create_user', $names);
+        $this->assertContains('moodle_due_work', $names);
         $this->assertNotContains('moodle_find_user', $names);
         $this->assertNotContains('moodle_send_message', $names);
         $this->assertNotContains('moodle_create_course', $names);
         $this->assertNotContains('moodle_update_course', $names);
         $this->assertNotContains('moodle_enrol_user', $names);
+        $this->assertNotContains('moodle_grading_queue', $names);
+        $this->assertNotContains('moodle_unanswered_forum_posts', $names);
         $this->assertNull(tool_provider::find_ai_tool('moodle_create_course'));
         $this->assertNull(tool_provider::find_ai_tool('moodle_update_course'));
         $this->assertNull(tool_provider::find_ai_tool('moodle_enrol_user'));
+        $this->assertNull(tool_provider::find_ai_tool('moodle_grading_queue'));
+        $this->assertNull(tool_provider::find_ai_tool('moodle_unanswered_forum_posts'));
 
         foreach ($tools as $tool) {
             $this->assertArrayHasKey('inputSchema', $tool);
@@ -161,6 +166,8 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertContains('moodle_create_course', $names);
         $this->assertContains('moodle_update_course', $names);
         $this->assertContains('moodle_enrol_user', $names);
+        $this->assertContains('moodle_grading_queue', $names);
+        $this->assertContains('moodle_unanswered_forum_posts', $names);
         $this->assertSame(
             \webservice_elediamcp\local\ai\tools\moodle_create_course::class,
             tool_provider::find_ai_tool('moodle_create_course')
@@ -172,6 +179,14 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertSame(
             \webservice_elediamcp\local\ai\tools\moodle_enrol_user::class,
             tool_provider::find_ai_tool('moodle_enrol_user')
+        );
+        $this->assertSame(
+            \webservice_elediamcp\local\ai\tools\moodle_grading_queue::class,
+            tool_provider::find_ai_tool('moodle_grading_queue')
+        );
+        $this->assertSame(
+            \webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts::class,
+            tool_provider::find_ai_tool('moodle_unanswered_forum_posts')
         );
     }
 }

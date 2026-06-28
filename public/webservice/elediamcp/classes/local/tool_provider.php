@@ -64,6 +64,7 @@ class tool_provider {
         'moodle_get_resource',
         'moodle_get_announcements',
         'moodle_calendar_upcoming',
+        'moodle_due_work',
         'moodle_my_assignments',
         'moodle_my_grades',
         'moodle_my_progress',
