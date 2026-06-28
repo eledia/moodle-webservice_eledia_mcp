@@ -40,11 +40,45 @@ final class shell {
     /** @var bool Whether the eLeDia.ai Tutor Plugin Shell helper is available. */
     private static bool $usespluginshell = false;
 
-    /** @var string Optional eLeDia.ai Tutor shell page class. */
-    private const PLUGIN_PAGE_CLASS = '\\block_elediaaitutor\\output\\plugin_page';
+    /**
+     * Optional eLeDia.ai Tutor shell page classes, newest component name first.
+     *
+     * @var string[]
+     */
+    private const TUTOR_PAGE_CLASSES = [
+        '\\block_eledia_aitutor\\output\\plugin_page',
+        '\\block_elediaaitutor\\output\\plugin_page',
+    ];
 
-    /** @var string Optional eLeDia.ai Tutor shell helper class. */
-    private const PLUGIN_SHELL_CLASS = '\\block_elediaaitutor\\output\\plugin_shell';
+    /**
+     * Optional eLeDia.ai Tutor shell helper classes, newest component name first.
+     *
+     * @var string[]
+     */
+    private const TUTOR_PLUGIN_SHELL_CLASSES = [
+        '\\block_eledia_aitutor\\output\\plugin_shell',
+        '\\block_elediaaitutor\\output\\plugin_shell',
+    ];
+
+    /**
+     * Optional eLeDia.ai Tutor shell classes, newest component name first.
+     *
+     * @var string[]
+     */
+    private const TUTOR_SHELL_CLASSES = [
+        '\\block_eledia_aitutor\\output\\shell',
+        '\\block_elediaaitutor\\output\\shell',
+    ];
+
+    /**
+     * Optional eLeDia.ai Tutor language components, newest component name first.
+     *
+     * @var string[]
+     */
+    private const TUTOR_COMPONENTS = [
+        'block_eledia_aitutor',
+        'block_elediaaitutor',
+    ];
 
     /**
      * Static-only helper.
@@ -58,7 +92,12 @@ final class shell {
     public static function require_css(): void {
         global $PAGE, $CFG;
 
-        if (file_exists($CFG->dirroot . '/blocks/elediaaitutor/styles.css')) {
+        if (file_exists($CFG->dirroot . '/local/lernhive/styles.css')) {
+            $PAGE->requires->css(new moodle_url('/local/lernhive/styles.css'));
+        }
+        if (file_exists($CFG->dirroot . '/blocks/eledia_aitutor/styles.css')) {
+            $PAGE->requires->css(new moodle_url('/blocks/eledia_aitutor/styles.css'));
+        } else if (file_exists($CFG->dirroot . '/blocks/elediaaitutor/styles.css')) {
             $PAGE->requires->css(new moodle_url('/blocks/elediaaitutor/styles.css'));
         }
         if (file_exists($CFG->dirroot . '/webservice/elediamcp/styles.css')) {
@@ -74,22 +113,31 @@ final class shell {
         ?string $fallbackheading = null,
         ?string $fallbackhint = null
     ): void {
-        $pluginpage = self::PLUGIN_PAGE_CLASS;
-        $pluginshell = self::PLUGIN_SHELL_CLASS;
-        self::$usespluginshell = class_exists($pluginpage) && class_exists($pluginshell);
+        $pluginpage = self::tutor_page_class();
+        $pluginshell = self::tutor_plugin_shell_class();
+        self::$usespluginshell = $pluginpage !== null && $pluginshell !== null;
         if (self::$usespluginshell) {
             $configurationurl = new moodle_url('/webservice/elediamcp/configuration.php');
+            $tutorcomponent = self::tutor_component();
             $headerdata = [
-                'name' => get_string('pluginname', 'block_elediaaitutor'),
-                'tagline' => get_string('nav_elediamcp', 'block_elediaaitutor'),
+                'name' => $tutorcomponent !== null
+                    ? get_string('pluginname', $tutorcomponent)
+                    : get_string('pluginname', 'webservice_elediamcp'),
+                'tagline' => $tutorcomponent !== null
+                    ? get_string('nav_elediamcp', $tutorcomponent)
+                    : get_string('configuration_tagline', 'webservice_elediamcp'),
                 'subtitle' => '',
                 'sectionnav' => self::sectionnav($active),
             ] + $pluginshell::action_slots(
-                'block_elediaaitutor',
+                $tutorcomponent ?? 'webservice_elediamcp',
                 true,
                 $configurationurl,
-                get_string('shell_help_label', 'block_elediaaitutor'),
-                get_string('shell_settings_label', 'block_elediaaitutor'),
+                $tutorcomponent !== null
+                    ? get_string('shell_help_label', $tutorcomponent)
+                    : get_string('help', 'core'),
+                $tutorcomponent !== null
+                    ? get_string('shell_settings_label', $tutorcomponent)
+                    : get_string('settings', 'core'),
                 true
             );
 
@@ -115,33 +163,39 @@ final class shell {
      * @return string Raw HTML for the Plugin Shell `sectionnav` slot.
      */
     private static function sectionnav(string $active): string {
+        $tutorshell = self::tutor_shell_class();
+        if ($tutorshell !== null) {
+            return $tutorshell::sectionnav(self::ACTIVE_ELEDIAMCP);
+        }
+
+        $tutorcomponent = self::tutor_component();
         $items = [];
 
-        if (class_exists('\block_elediaaitutor\output\shell')) {
+        if ($tutorcomponent !== null) {
             $items = [
                 [
                     'key' => 'configuration',
                     'icon' => 'fa-th-large',
-                    'label' => get_string('nav_configuration', 'block_elediaaitutor'),
-                    'url' => new moodle_url('/blocks/elediaaitutor/configuration.php'),
+                    'label' => get_string('nav_configuration', $tutorcomponent),
+                    'url' => new moodle_url(self::tutor_path('/configuration.php')),
                 ],
                 [
                     'key' => 'settings',
                     'icon' => 'fa-sliders',
-                    'label' => get_string('configuration_admin_settings_title', 'block_elediaaitutor'),
-                    'url' => new moodle_url('/admin/settings.php', ['section' => 'blocksettingelediaaitutor']),
+                    'label' => get_string('configuration_admin_settings_title', $tutorcomponent),
+                    'url' => new moodle_url('/admin/settings.php', ['section' => 'blocksetting' . substr($tutorcomponent, 6)]),
                 ],
                 [
                     'key' => 'tutors',
                     'icon' => 'fa-paint-brush',
-                    'label' => get_string('nav_tutors', 'block_elediaaitutor'),
-                    'url' => new moodle_url('/blocks/elediaaitutor/manage_tutors.php'),
+                    'label' => get_string('nav_tutors', $tutorcomponent),
+                    'url' => new moodle_url(self::tutor_path('/manage_tutors.php')),
                 ],
                 [
                     'key' => 'preview',
                     'icon' => 'fa-comments',
-                    'label' => get_string('nav_preview', 'block_elediaaitutor'),
-                    'url' => new moodle_url('/blocks/elediaaitutor/view.php'),
+                    'label' => get_string('nav_preview', $tutorcomponent),
+                    'url' => new moodle_url(self::tutor_path('/view.php')),
                 ],
             ];
 
@@ -149,13 +203,13 @@ final class shell {
                 'local_literag' => [
                     'key' => 'literag',
                     'icon' => 'fa-database',
-                    'label' => get_string('nav_literag', 'block_elediaaitutor'),
+                    'label' => get_string('nav_literag', $tutorcomponent),
                     'url' => new moodle_url('/admin/settings.php', ['section' => 'local_literag']),
                 ],
                 'local_ragingest' => [
                     'key' => 'ragingest',
                     'icon' => 'fa-upload',
-                    'label' => get_string('nav_ragingest', 'block_elediaaitutor'),
+                    'label' => get_string('nav_ragingest', $tutorcomponent),
                     'url' => new moodle_url('/admin/settings.php', ['section' => 'local_ragingest_settings']),
                 ],
             ];
@@ -169,14 +223,16 @@ final class shell {
         $items[] = [
             'key' => self::ACTIVE_ELEDIAMCP,
             'icon' => 'fa-plug',
-            'label' => 'MCP',
+            'label' => $tutorcomponent !== null
+                ? get_string('nav_elediamcp', $tutorcomponent)
+                : get_string('pluginname', 'webservice_elediamcp'),
             'url' => new moodle_url('/webservice/elediamcp/configuration.php'),
         ];
 
         $html = html_writer::start_tag('nav', [
             'class' => 'lh-plugin-section-nav',
-            'aria-label' => class_exists('\block_elediaaitutor\output\shell')
-                ? get_string('nav_label', 'block_elediaaitutor')
+            'aria-label' => $tutorcomponent !== null
+                ? get_string('nav_label', $tutorcomponent)
                 : get_string('pluginname', 'webservice_elediamcp'),
         ]);
 
@@ -201,12 +257,86 @@ final class shell {
     }
 
     /**
+     * Resolve the optional eLeDia.ai Tutor shell page class.
+     *
+     * @return string|null Fully qualified class name, or null when unavailable.
+     */
+    private static function tutor_page_class(): ?string {
+        foreach (self::TUTOR_PAGE_CLASSES as $class) {
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve the optional eLeDia.ai Tutor shell helper class.
+     *
+     * @return string|null Fully qualified class name, or null when unavailable.
+     */
+    private static function tutor_plugin_shell_class(): ?string {
+        foreach (self::TUTOR_PLUGIN_SHELL_CLASSES as $class) {
+            if (class_exists($class)) {
+                return $class;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve the optional eLeDia.ai Tutor shell class.
+     *
+     * @return string|null Fully qualified class name, or null when unavailable.
+     */
+    private static function tutor_shell_class(): ?string {
+        foreach (self::TUTOR_SHELL_CLASSES as $class) {
+            if (class_exists($class) && method_exists($class, 'sectionnav')) {
+                return $class;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Resolve the optional eLeDia.ai Tutor language component.
+     *
+     * @return string|null Frankenstyle component name, or null when unavailable.
+     */
+    private static function tutor_component(): ?string {
+        foreach (self::TUTOR_COMPONENTS as $component) {
+            [$type, $name] = explode('_', $component, 2);
+            if (\core_component::get_plugin_directory($type, $name) !== null) {
+                return $component;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Build a URL path into the installed eLeDia.ai Tutor block.
+     *
+     * @param string $script Script path inside the block directory.
+     * @return string Moodle URL path.
+     */
+    private static function tutor_path(string $script): string {
+        $component = self::tutor_component();
+        $blockname = $component !== null ? substr($component, 6) : 'eledia_aitutor';
+        return '/blocks/' . $blockname . $script;
+    }
+
+    /**
      * Close the content area and shell.
      */
     public static function close(): void {
         if (self::$usespluginshell) {
-            $pluginpage = self::PLUGIN_PAGE_CLASS;
-            $pluginshell = self::PLUGIN_SHELL_CLASS;
+            $pluginpage = self::tutor_page_class();
+            $pluginshell = self::tutor_plugin_shell_class();
+            if ($pluginpage === null || $pluginshell === null) {
+                self::$usespluginshell = false;
+                echo html_writer::end_div();
+                return;
+            }
             $pluginshell::content_close();
             $pluginpage::close();
             self::$usespluginshell = false;
