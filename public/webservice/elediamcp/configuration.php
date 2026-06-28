@@ -29,7 +29,9 @@ require_once($CFG->dirroot . '/webservice/lib.php');
 use core\output\notification;
 use webservice_elediamcp\form\configuration_form;
 use webservice_elediamcp\form\create_token_form;
+use webservice_elediamcp\local\premium;
 use webservice_elediamcp\local\token_manager;
+use webservice_elediamcp\local\tool_provider;
 use webservice_elediamcp\output\shell;
 
 require_login();
@@ -49,21 +51,21 @@ $action = optional_param('action', '', PARAM_ALPHA);
 $tokenid = optional_param('tokenid', 0, PARAM_INT);
 $confirm = optional_param('confirm', 0, PARAM_BOOL);
 
-/**
- * Build the list of MCP services the current user may create a token for.
- *
- * @return array<int, string> Service id => display name.
- */
+// Build the list of MCP services the current user may create a token for.
 $buildusableservices = function () use ($USER, $context): array {
     $usable = [];
     $manager = new webservice();
     foreach (token_manager::get_mcp_services() as $service) {
-        if (!empty($service->requiredcapability)
-                && !has_capability($service->requiredcapability, $context, $USER->id)) {
+        if (
+            !empty($service->requiredcapability)
+                && !has_capability($service->requiredcapability, $context, $USER->id)
+        ) {
             continue;
         }
-        if (!empty($service->restrictedusers)
-                && empty($manager->get_ws_authorised_user($service->id, $USER->id))) {
+        if (
+            !empty($service->restrictedusers)
+                && empty($manager->get_ws_authorised_user($service->id, $USER->id))
+        ) {
             continue;
         }
         $usable[(int) $service->id] = format_string($service->name);
@@ -71,13 +73,7 @@ $buildusableservices = function () use ($USER, $context): array {
     return $usable;
 };
 
-/**
- * Build a ready-to-paste Claude Desktop (mcp-remote) configuration snippet.
- *
- * @param string $endpoint Absolute MCP server URL.
- * @param string $token Token value, or a placeholder for the generic example.
- * @return string Pretty-printed JSON configuration.
- */
+// Build a ready-to-paste Claude Desktop (mcp-remote) configuration snippet.
 $buildclaudeconfig = function (string $endpoint, string $token): string {
     $config = [
         'mcpServers' => [
@@ -99,12 +95,7 @@ $buildclaudeconfig = function (string $endpoint, string $token): string {
     return (string) json_encode($config, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
 };
 
-/**
- * Render a JSON snippet as an escaped, copy-friendly code block.
- *
- * @param string $json JSON text to display.
- * @return string HTML.
- */
+// Render a JSON snippet as an escaped, copy-friendly code block.
 $renderjsonblock = function (string $json): string {
     return html_writer::tag(
         'pre',
@@ -123,8 +114,12 @@ if ($action === 'revoke' && $tokenid) {
 
     if ($confirm && confirm_sesskey()) {
         token_manager::revoke_token($tokenid, (int) $USER->id);
-        redirect($tokenanchorurl, get_string('token_revoked_notice', 'webservice_elediamcp'), null,
-            notification::NOTIFY_SUCCESS);
+        redirect(
+            $tokenanchorurl,
+            get_string('token_revoked_notice', 'webservice_elediamcp'),
+            null,
+            notification::NOTIFY_SUCCESS
+        );
     }
 
     shell::require_css();
@@ -186,8 +181,10 @@ if (has_capability('webservice/elediamcp:managetokens', $context) && !empty($usa
 $mform = new configuration_form($url->out(false), ['services' => $services]);
 
 $current = (object) [
-    'services' => array_values(array_filter(array_map('intval',
-        explode(',', (string) get_config('webservice_elediamcp', 'services'))))),
+    'services' => array_values(array_filter(array_map(
+        'intval',
+        explode(',', (string) get_config('webservice_elediamcp', 'services'))
+    ))),
     'token_retention_days' => get_config('webservice_elediamcp', 'token_retention_days') ?: 30,
     'allowed_origins' => get_config('webservice_elediamcp', 'allowed_origins') ?: '',
     'allow_token_in_query' => (int) (get_config('webservice_elediamcp', 'allow_token_in_query') ?: 0),
@@ -233,6 +230,70 @@ shell::require_css();
 echo $OUTPUT->header();
 shell::open();
 echo html_writer::start_div('webservice-elediamcp-page-content');
+
+$freeaitools = tool_provider::free_ai_tool_names();
+$premiumaitools = tool_provider::premium_ai_tool_names();
+$premiumactive = premium::has_mcp_tools();
+$editionstring = $premiumactive
+    ? get_string('premium_status_active', 'webservice_elediamcp')
+    : get_string('premium_status_free', 'webservice_elediamcp');
+$statusintro = get_string('premium_status_intro', 'webservice_elediamcp', (object) [
+    'edition' => $editionstring,
+    'freecount' => count($freeaitools),
+    'premiumcount' => count($premiumaitools),
+]);
+$premiumbadges = array_map(static function (string $tool): string {
+    return html_writer::span(s($tool), 'webservice-elediamcp-tool-pill');
+}, $premiumaitools);
+
+echo html_writer::tag('h3', get_string('premium_status_heading', 'webservice_elediamcp'), [
+    'class' => 'webservice-elediamcp-card__title',
+]);
+echo html_writer::start_tag('section', [
+    'class' => 'webservice-elediamcp-card webservice-elediamcp-premium-card',
+]);
+echo html_writer::start_div('webservice-elediamcp-premium-card__summary');
+echo html_writer::span(
+    s($editionstring),
+    'webservice-elediamcp-edition-badge '
+        . ($premiumactive ? 'webservice-elediamcp-edition-badge--premium' : 'webservice-elediamcp-edition-badge--free')
+);
+echo html_writer::div($statusintro, 'webservice-elediamcp-premium-card__intro');
+echo html_writer::end_div();
+if (!$premiumactive) {
+    echo html_writer::div(
+        get_string('premium_status_free_notice', 'webservice_elediamcp'),
+        'webservice-elediamcp-section-info alert alert-info'
+    );
+} else {
+    echo html_writer::div(
+        get_string('premium_status_active_notice', 'webservice_elediamcp'),
+        'webservice-elediamcp-section-info alert alert-success'
+    );
+}
+echo html_writer::div(
+    html_writer::span(
+        get_string('premium_status_free_tools', 'webservice_elediamcp', count($freeaitools)),
+        'webservice-elediamcp-tool-count'
+    )
+    . html_writer::span(
+        get_string('premium_status_premium_tools', 'webservice_elediamcp', count($premiumaitools)),
+        'webservice-elediamcp-tool-count'
+    ),
+    'webservice-elediamcp-tool-counts'
+);
+if (!empty($premiumbadges)) {
+    echo html_writer::div(
+        html_writer::div(
+            get_string('premium_status_premium_tool_list', 'webservice_elediamcp'),
+            'webservice-elediamcp-tool-list-label'
+        )
+        . html_writer::div(implode('', $premiumbadges), 'webservice-elediamcp-tool-pills'),
+        'webservice-elediamcp-tool-list'
+    );
+}
+echo html_writer::end_tag('section');
+
 $mform->display();
 
 if (has_capability('webservice/elediamcp:managetokens', $context)) {
@@ -246,8 +307,11 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
         ]);
         echo $OUTPUT->notification($box, notification::NOTIFY_SUCCESS, false);
 
-        echo html_writer::tag('p', get_string('claude_connect_snippet_withtoken', 'webservice_elediamcp'),
-            ['class' => 'mb-2']);
+        echo html_writer::tag(
+            'p',
+            get_string('claude_connect_snippet_withtoken', 'webservice_elediamcp'),
+            ['class' => 'mb-2']
+        );
         echo $renderjsonblock($buildclaudeconfig($serverurl, $newtoken));
     }
 
@@ -255,8 +319,10 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
         'class' => 'webservice-elediamcp-card__title',
         'id' => 'mcp-tokens',
     ]);
-    echo html_writer::div(get_string('tokens_intro', 'webservice_elediamcp'),
-        'webservice-elediamcp-section-info alert alert-info');
+    echo html_writer::div(
+        get_string('tokens_intro', 'webservice_elediamcp'),
+        'webservice-elediamcp-section-info alert alert-info'
+    );
 
     echo html_writer::start_tag('section', [
         'class' => 'webservice-elediamcp-card webservice-elediamcp-token-card webservice-elediamcp-token-list-card',
@@ -267,10 +333,15 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
         'aria-hidden' => 'true',
     ]), ['class' => 'webservice-elediamcp-list-header__icon']);
     echo html_writer::start_div('webservice-elediamcp-list-header__text');
-    echo html_writer::div(get_string('configuration_tag_mcp', 'webservice_elediamcp'),
-        'webservice-elediamcp-list-header__eyebrow');
-    echo html_writer::tag('h4', get_string('tokens_existing_heading', 'webservice_elediamcp'),
-        ['class' => 'webservice-elediamcp-list-header__title']);
+    echo html_writer::div(
+        get_string('configuration_tag_mcp', 'webservice_elediamcp'),
+        'webservice-elediamcp-list-header__eyebrow'
+    );
+    echo html_writer::tag(
+        'h4',
+        get_string('tokens_existing_heading', 'webservice_elediamcp'),
+        ['class' => 'webservice-elediamcp-list-header__title']
+    );
     echo html_writer::end_div();
     echo html_writer::end_div();
 
@@ -282,7 +353,8 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
         echo html_writer::start_tag('table', ['class' => 'webservice-elediamcp-token-table']);
         echo html_writer::start_tag('thead');
         echo html_writer::start_tag('tr');
-        foreach ([
+        foreach (
+            [
             get_string('token_label', 'webservice_elediamcp'),
             get_string('token_service', 'webservice_elediamcp'),
             get_string('token_created', 'webservice_elediamcp'),
@@ -290,7 +362,8 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
             get_string('token_lastused', 'webservice_elediamcp'),
             get_string('token_status', 'webservice_elediamcp'),
             get_string('token_actions', 'webservice_elediamcp'),
-        ] as $heading) {
+            ] as $heading
+        ) {
             echo html_writer::tag('th', $heading, ['scope' => 'col']);
         }
         echo html_writer::end_tag('tr');
@@ -323,10 +396,16 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
             echo html_writer::tag('td', html_writer::span(s($token->name), 'webservice-elediamcp-token-name'));
             echo html_writer::tag('td', s($token->servicename ?? ''));
             echo html_writer::tag('td', userdate($token->timecreated), ['class' => 'webservice-elediamcp-token-muted']);
-            echo html_writer::tag('td', !empty($token->validuntil) ? userdate($token->validuntil) : $strnever,
-                ['class' => 'webservice-elediamcp-token-muted']);
-            echo html_writer::tag('td', !empty($token->lastaccess) ? userdate($token->lastaccess) : $strnever,
-                ['class' => 'webservice-elediamcp-token-muted']);
+            echo html_writer::tag(
+                'td',
+                !empty($token->validuntil) ? userdate($token->validuntil) : $strnever,
+                ['class' => 'webservice-elediamcp-token-muted']
+            );
+            echo html_writer::tag(
+                'td',
+                !empty($token->lastaccess) ? userdate($token->lastaccess) : $strnever,
+                ['class' => 'webservice-elediamcp-token-muted']
+            );
             echo html_writer::tag('td', $statusbadge);
             echo html_writer::tag('td', html_writer::span($actions, 'webservice-elediamcp-token-actions'));
             echo html_writer::end_tag('tr');

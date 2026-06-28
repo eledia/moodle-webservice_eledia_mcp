@@ -32,5 +32,5 @@ creation where the Moodle user has the required capability.
 With the premium add-on feature `mcp_tools`, the full MCP catalogue is available,
 including additional communication, forum, submission, course creation and raw
 Moodle web service tools when enabled by policy. Premium write tools include
-course creation and manual course enrolment; they use a preview step and only
-change Moodle after a second call with `confirm=true`.
+course creation, course updates and manual course enrolment; they use a preview
+step and only change Moodle after a second call with `confirm=true`.

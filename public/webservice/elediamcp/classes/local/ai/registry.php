@@ -37,6 +37,7 @@ use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
 use webservice_elediamcp\local\ai\tools\moodle_search_content;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
+use webservice_elediamcp\local\ai\tools\moodle_update_course;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
 /**
@@ -89,6 +90,7 @@ class registry {
             moodle_send_message::class,
             moodle_create_user::class,
             moodle_create_course::class,
+            moodle_update_course::class,
             moodle_enrol_user::class,
         ];
     }

@@ -116,8 +116,10 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertNotContains('moodle_find_user', $names);
         $this->assertNotContains('moodle_send_message', $names);
         $this->assertNotContains('moodle_create_course', $names);
+        $this->assertNotContains('moodle_update_course', $names);
         $this->assertNotContains('moodle_enrol_user', $names);
         $this->assertNull(tool_provider::find_ai_tool('moodle_create_course'));
+        $this->assertNull(tool_provider::find_ai_tool('moodle_update_course'));
         $this->assertNull(tool_provider::find_ai_tool('moodle_enrol_user'));
 
         foreach ($tools as $tool) {
@@ -126,9 +128,11 @@ final class tool_provider_extras_test extends advanced_testcase {
             $this->assertArrayHasKey('annotations', $tool);
             $this->assertArrayHasKey('title', $tool);
 
-            // outputSchema must NOT have the legacy {result:...} wrapper.
-            if (!empty($tool['outputSchema']['properties'])
-                && is_array($tool['outputSchema']['properties'])) {
+            // Output schema must NOT have the legacy {result:...} wrapper.
+            if (
+                !empty($tool['outputSchema']['properties'])
+                && is_array($tool['outputSchema']['properties'])
+            ) {
                 $this->assertArrayNotHasKey('result', $tool['outputSchema']['properties']);
             }
         }
@@ -141,6 +145,7 @@ final class tool_provider_extras_test extends advanced_testcase {
      */
     public function test_premium_addon_unlocks_full_ai_catalogue(): void {
         if (!class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
+            // phpcs:ignore moodle.PHP.ForbiddenTokens.Found
             eval('namespace local_elediaai_tutor_premium; class feature {
                 public static function has_feature(string $feature): bool {
                     return $feature === "mcp_tools";
@@ -154,10 +159,15 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertContains('moodle_find_user', $names);
         $this->assertContains('moodle_send_message', $names);
         $this->assertContains('moodle_create_course', $names);
+        $this->assertContains('moodle_update_course', $names);
         $this->assertContains('moodle_enrol_user', $names);
         $this->assertSame(
             \webservice_elediamcp\local\ai\tools\moodle_create_course::class,
             tool_provider::find_ai_tool('moodle_create_course')
+        );
+        $this->assertSame(
+            \webservice_elediamcp\local\ai\tools\moodle_update_course::class,
+            tool_provider::find_ai_tool('moodle_update_course')
         );
         $this->assertSame(
             \webservice_elediamcp\local\ai\tools\moodle_enrol_user::class,

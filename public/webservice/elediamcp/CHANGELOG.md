@@ -12,12 +12,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   MCP plugin shell without a runtime dependency on LernHive.
 - Optional Premium gating for the extended MCP tool surface through the
   `mcp_tools` feature of `local_elediaai_tutor_premium`.
+- Premium `moodle_update_course` tool for course title, shortname, visibility,
+  summary and date updates with preview and confirmation flow.
 - Premium `moodle_enrol_user` tool for manual course enrolments with preview
   and confirmation flow.
 
 ### Changed
 - MCP configuration, token management and Claude connection guidance now live on
   one MCP page in the shared plugin shell.
+- The MCP configuration page now shows whether the site is using the Free or
+  Premium MCP tool catalogue and lists the additional premium tools.
+- Premium feature detection now uses only the canonical
+  `local_elediaai_tutor_premium` add-on.
 - Token creation uses a post/redirect/get flow so refreshes do not accidentally
   create another token.
 - DevFlow documentation was consolidated into the root `Docs/` structure.

@@ -159,6 +159,24 @@ class tool_provider {
     }
 
     /**
+     * Return the AI-native tool names available in the free edition.
+     *
+     * @return string[]
+     */
+    public static function free_ai_tool_names(): array {
+        return self::FREE_AI_TOOLS;
+    }
+
+    /**
+     * Return the AI-native tool names that require the premium add-on.
+     *
+     * @return string[]
+     */
+    public static function premium_ai_tool_names(): array {
+        return array_values(array_diff(registry::names(), self::FREE_AI_TOOLS));
+    }
+
+    /**
      * Apply pagination to a list of tools.
      *
      * @param array<int, array<string, mixed>> $tools Full set of tools.

@@ -35,6 +35,6 @@ Nutzererstellung bereit, sofern der Moodle-Nutzer die noetigen Rechte besitzt.
 Mit dem Premium-Feature `mcp_tools` wird der vollstaendige MCP-Katalog
 freigeschaltet, einschliesslich weiterer Kommunikations-, Forum-, Abgabe-,
 Kurserstellungs- und roher Moodle-Webservice-Tools, sofern die Richtlinie dies
-zulaesst. Premium-Schreibtools umfassen Kurserstellung und manuelle
-Kurseinschreibung. Sie nutzen eine Vorschau und veraendern Moodle erst beim
-zweiten Aufruf mit `confirm=true`.
+zulaesst. Premium-Schreibtools umfassen Kurserstellung, Kursaktualisierung und
+manuelle Kurseinschreibung. Sie nutzen eine Vorschau und veraendern Moodle erst
+beim zweiten Aufruf mit `confirm=true`.

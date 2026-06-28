@@ -300,6 +300,8 @@ require an explicit two-step confirmation.
 | `moodle_send_message` | **write** | Sends a one-to-one message. Two-step: preview, then `confirm=true`. Respects `can_send_message()`. |
 | `moodle_create_user` | **write** | Creates a user account. Two-step confirmation; requires `moodle/user:create`. |
 | `moodle_create_course` | **write** | Creates a course in a category. Two-step confirmation; requires `moodle/course:create` in the category context. |
+| `moodle_update_course` | **write** | Updates course title, shortname, visibility, summary and dates. Two-step confirmation; requires `moodle/course:update`. |
+| `moodle_enrol_user` | **write** | Enrols an existing user through manual enrolment. Two-step confirmation; requires `enrol/manual:enrol`. |
 
 When **Expose raw Moodle Web Service functions** is enabled, every external function
 assigned to the authenticated service is additionally exposed as an MCP tool. This is

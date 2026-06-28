@@ -41,23 +41,14 @@ class premium {
     /**
      * Whether the optional premium add-on exposes a feature.
      *
-     * The new add-on component is local_elediaai_tutor_premium. The legacy
-     * local_elediaaitutorpremium component is kept as a compatibility fallback
-     * for older local installations.
-     *
      * @param string $feature Feature id.
      * @return bool
      */
     public static function has_feature(string $feature): bool {
-        foreach ([
-            '\\local_elediaai_tutor_premium\\feature',
-            '\\local_elediaaitutorpremium\\feature',
-        ] as $class) {
-            if (class_exists($class) && method_exists($class, 'has_feature') && $class::has_feature($feature)) {
-                return true;
-            }
-        }
+        $class = '\\local_elediaai_tutor_premium\\feature';
 
-        return false;
+        return class_exists($class)
+            && method_exists($class, 'has_feature')
+            && $class::has_feature($feature);
     }
 }

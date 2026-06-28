@@ -23,6 +23,7 @@ use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
 use webservice_elediamcp\local\ai\tools\moodle_enrol_user;
 use webservice_elediamcp\local\ai\tools\moodle_me;
+use webservice_elediamcp\local\ai\tools\moodle_update_course;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
 /**
@@ -37,6 +38,7 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_course
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_user
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_enrol_user
+ * @covers      \webservice_elediamcp\local\ai\tools\moodle_update_course
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_me
  * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
@@ -50,6 +52,7 @@ final class ai_tools_test extends advanced_testcase {
         $this->assertContains('moodle_verify_user_context', $names);
         $this->assertContains('moodle_create_user', $names);
         $this->assertContains('moodle_create_course', $names);
+        $this->assertContains('moodle_update_course', $names);
         $this->assertContains('moodle_enrol_user', $names);
 
         $this->assertSame(moodle_me::class, registry::find('moodle_me'));
@@ -59,6 +62,7 @@ final class ai_tools_test extends advanced_testcase {
         );
         $this->assertSame(moodle_create_user::class, registry::find('moodle_create_user'));
         $this->assertSame(moodle_create_course::class, registry::find('moodle_create_course'));
+        $this->assertSame(moodle_update_course::class, registry::find('moodle_update_course'));
         $this->assertSame(moodle_enrol_user::class, registry::find('moodle_enrol_user'));
         $this->assertNull(registry::find('does_not_exist'));
     }
@@ -69,8 +73,11 @@ final class ai_tools_test extends advanced_testcase {
     public function test_registered_tools_have_complete_metadata(): void {
         foreach (registry::all() as $class) {
             $name = $class::name();
-            $this->assertMatchesRegularExpression('/^[A-Za-z0-9_.\\-]{1,128}$/', $name,
-                "Tool name {$name} must be MCP-compliant.");
+            $this->assertMatchesRegularExpression(
+                '/^[A-Za-z0-9_.\\-]{1,128}$/',
+                $name,
+                "Tool name {$name} must be MCP-compliant."
+            );
             $this->assertNotEmpty($class::title());
             $this->assertNotEmpty($class::description());
 
@@ -308,6 +315,89 @@ final class ai_tools_test extends advanced_testcase {
         moodle_create_course::execute([
             'fullname' => 'Duplicate Course',
             'shortname' => 'DUPLICATE',
+            'confirm' => true,
+        ], $USER);
+    }
+
+    /**
+     * moodle_update_course previews first and updates only after confirmation.
+     */
+    public function test_moodle_update_course_preview_and_confirm(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $USER;
+
+        $course = $this->getDataGenerator()->create_course([
+            'fullname' => 'Original Course',
+            'shortname' => 'ORIGINAL',
+            'summary' => 'Original summary',
+            'visible' => 1,
+            'startdate' => 100,
+            'enddate' => 0,
+        ]);
+
+        $args = [
+            'course_id' => (int) $course->id,
+            'fullname' => 'Updated Course',
+            'shortname' => 'UPDATED',
+            'summary' => 'Updated summary',
+            'visible' => false,
+            'startdate' => 200,
+            'enddate' => 300,
+        ];
+
+        $preview = moodle_update_course::execute($args, $USER);
+        $this->assertFalse($preview['updated']);
+        $this->assertTrue($preview['requires_confirmation']);
+        $this->assertCount(6, $preview['preview']['changes']);
+
+        $unchanged = get_course((int) $course->id);
+        $this->assertSame('Original Course', $unchanged->fullname);
+        $this->assertSame('ORIGINAL', $unchanged->shortname);
+
+        $updated = moodle_update_course::execute($args + ['confirm' => true], $USER);
+        $this->assertTrue($updated['updated']);
+        $this->assertFalse($updated['requires_confirmation']);
+        $this->assertSame('Updated Course', $updated['course']['fullname']);
+        $this->assertSame('UPDATED', $updated['course']['shortname']);
+        $this->assertFalse($updated['course']['visible']);
+        $this->assertSame(200, $updated['course']['startdate']);
+        $this->assertSame(300, $updated['course']['enddate']);
+    }
+
+    /**
+     * moodle_update_course requires course update capability.
+     */
+    public function test_moodle_update_course_requires_capability(): void {
+        $this->resetAfterTest(true);
+
+        $course = $this->getDataGenerator()->create_course();
+        $caller = $this->getDataGenerator()->create_user();
+        $this->setUser($caller);
+
+        $this->expectException(\required_capability_exception::class);
+        moodle_update_course::execute([
+            'course_id' => (int) $course->id,
+            'fullname' => 'Blocked Update',
+            'confirm' => true,
+        ], $caller);
+    }
+
+    /**
+     * moodle_update_course rejects duplicate shortnames.
+     */
+    public function test_moodle_update_course_duplicate_shortname(): void {
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+        global $USER;
+
+        $course = $this->getDataGenerator()->create_course(['shortname' => 'TARGET']);
+        $this->getDataGenerator()->create_course(['shortname' => 'EXISTS']);
+
+        $this->expectException(tool_exception::class);
+        moodle_update_course::execute([
+            'course_id' => (int) $course->id,
+            'shortname' => 'EXISTS',
             'confirm' => true,
         ], $USER);
     }
