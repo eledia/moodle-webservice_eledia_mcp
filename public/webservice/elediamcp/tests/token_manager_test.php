@@ -75,6 +75,33 @@ final class token_manager_test extends advanced_testcase {
     }
 
     /**
+     * The default one-click setup enables the protocol and configures a dedicated
+     * MCP external service without exposing raw external functions.
+     */
+    public function test_ensure_default_service_configured(): void {
+        global $CFG, $DB;
+
+        set_config('enablewebservices', 0);
+        set_config('webserviceprotocols', 'rest');
+        set_config('services', '', 'webservice_elediamcp');
+
+        $serviceid = token_manager::ensure_default_service_configured();
+
+        $this->assertEquals(1, (int) $CFG->enablewebservices);
+        $this->assertContains('elediamcp', explode(',', (string) $CFG->webserviceprotocols));
+        $this->assertEquals([$serviceid], token_manager::get_configured_service_ids());
+
+        $service = $DB->get_record('external_services', ['id' => $serviceid], '*', MUST_EXIST);
+        $this->assertEquals(token_manager::DEFAULT_SERVICE_NAME, $service->name);
+        $this->assertEquals(token_manager::DEFAULT_SERVICE_SHORTNAME, $service->shortname);
+        $this->assertEquals(1, (int) $service->enabled);
+        $this->assertEquals('webservice/elediamcp:use', $service->requiredcapability);
+        $this->assertEquals(0, (int) $service->restrictedusers);
+        $this->assertEquals('webservice_elediamcp', $service->component);
+        $this->assertEquals(0, $DB->count_records('external_services_functions', ['externalserviceid' => $serviceid]));
+    }
+
+    /**
      * A token can be created for a configured MCP service, and the plaintext
      * value is returned exactly once while a metadata row and a backing core
      * token are persisted.

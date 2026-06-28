@@ -113,7 +113,9 @@ $string['tokens_heading'] = 'MCP tokens';
 $string['tokens_existing_heading'] = 'Existing tokens';
 $string['tokens_intro'] = 'Tokens let MCP clients and AI agents access Moodle on your behalf. Treat each token like a password.';
 $string['tokens_navlabel'] = 'MCP tokens';
-$string['tokens_no_services_configured'] = 'No MCP services have been configured on this site yet. An administrator must select one or more external services under Site administration → Plugins → Web services → Model Context Protocol → "MCP external services" before tokens can be created.';
+$string['tokens_activate_service_button'] = 'Activate MCP service';
+$string['tokens_activate_service_success'] = 'The MCP service has been activated. You can now create tokens.';
+$string['tokens_no_services_configured'] = 'No MCP service has been configured on this site yet. Activate the default MCP service to enable token creation.';
 $string['tokens_no_services_permitted'] = 'MCP services are configured on this site, but you are not currently permitted to use any of them. This usually means the service is restricted to authorised users; contact your administrator to be granted access.';
 $string['tokens_none'] = 'You have not created any MCP tokens yet.';
 

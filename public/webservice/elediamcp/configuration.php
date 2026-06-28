@@ -104,6 +104,17 @@ $renderjsonblock = function (string $json): string {
     );
 };
 
+if ($action === 'activate') {
+    require_sesskey();
+    token_manager::ensure_default_service_configured();
+    redirect(
+        $tokenanchorurl,
+        get_string('tokens_activate_service_success', 'webservice_elediamcp'),
+        null,
+        notification::NOTIFY_SUCCESS
+    );
+}
+
 if ($action === 'revoke' && $tokenid) {
     require_capability('webservice/elediamcp:managetokens', $context);
 
@@ -423,7 +434,15 @@ if (has_capability('webservice/elediamcp:managetokens', $context)) {
     if ($tokenform !== null) {
         $tokenform->display();
     } else if (empty(token_manager::get_mcp_services())) {
-        echo html_writer::div(get_string('tokens_no_services_configured', 'webservice_elediamcp'), 'alert alert-warning');
+        echo html_writer::div(
+            html_writer::tag('p', get_string('tokens_no_services_configured', 'webservice_elediamcp'), ['class' => 'mb-3'])
+            . $OUTPUT->single_button(
+                new moodle_url($url, ['action' => 'activate', 'sesskey' => sesskey()], 'mcp-tokens'),
+                get_string('tokens_activate_service_button', 'webservice_elediamcp'),
+                'post'
+            ),
+            'alert alert-warning webservice-elediamcp-activation-box'
+        );
     } else {
         echo html_writer::div(get_string('tokens_no_services_permitted', 'webservice_elediamcp'), 'alert alert-warning');
     }

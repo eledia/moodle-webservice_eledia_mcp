@@ -46,6 +46,12 @@ use webservice_elediamcp\event\token_revoked;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class token_manager {
+    /** @var string Shortname of the default MCP external service. */
+    public const DEFAULT_SERVICE_SHORTNAME = 'elediamcp';
+
+    /** @var string Human-readable name of the default MCP external service. */
+    public const DEFAULT_SERVICE_NAME = 'MCP Service';
+
     /** @var string Token is live and usable. */
     public const STATUS_ACTIVE = 'active';
 
@@ -102,6 +108,63 @@ class token_manager {
             'name ASC'
         );
         return $records;
+    }
+
+    /**
+     * Create or repair the default MCP external service and activate the protocol.
+     *
+     * This is intentionally conservative: it creates a dedicated service for MCP
+     * token issuance and does not assign raw external functions to that service.
+     * The curated MCP tools are served by the MCP endpoint itself.
+     *
+     * @return int The configured external service id.
+     */
+    public static function ensure_default_service_configured(): int {
+        global $CFG, $DB;
+
+        set_config('enablewebservices', 1);
+
+        $protocols = empty($CFG->webserviceprotocols) ? [] : explode(',', (string) $CFG->webserviceprotocols);
+        $protocols = array_values(array_unique(array_filter(array_map('trim', $protocols))));
+        if (!in_array('elediamcp', $protocols, true)) {
+            $protocols[] = 'elediamcp';
+            set_config('webserviceprotocols', implode(',', $protocols));
+        }
+
+        $now = time();
+        $service = $DB->get_record('external_services', ['shortname' => self::DEFAULT_SERVICE_SHORTNAME]);
+        if ($service) {
+            $service->name = self::DEFAULT_SERVICE_NAME;
+            $service->enabled = 1;
+            $service->requiredcapability = 'webservice/elediamcp:use';
+            $service->restrictedusers = 0;
+            $service->component = 'webservice_elediamcp';
+            $service->timemodified = $now;
+            $service->downloadfiles = 0;
+            $service->uploadfiles = 0;
+            $DB->update_record('external_services', $service);
+            $serviceid = (int) $service->id;
+        } else {
+            $serviceid = (int) $DB->insert_record('external_services', (object) [
+                'name' => self::DEFAULT_SERVICE_NAME,
+                'enabled' => 1,
+                'requiredcapability' => 'webservice/elediamcp:use',
+                'restrictedusers' => 0,
+                'component' => 'webservice_elediamcp',
+                'timecreated' => $now,
+                'timemodified' => $now,
+                'shortname' => self::DEFAULT_SERVICE_SHORTNAME,
+                'downloadfiles' => 0,
+                'uploadfiles' => 0,
+            ]);
+        }
+
+        $configured = self::get_configured_service_ids();
+        $configured[] = $serviceid;
+        $configured = array_values(array_unique(array_filter(array_map('intval', $configured))));
+        set_config('services', implode(',', $configured), 'webservice_elediamcp');
+
+        return $serviceid;
     }
 
     /**
