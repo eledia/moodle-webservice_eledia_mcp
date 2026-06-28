@@ -1,0 +1,40 @@
+# Editor / IDE
+/.idea/
+/.vscode/
+*.iml
+*.swp
+*~
+.DS_Store
+
+# Claude Code / AI assistant local config (machine-specific, may contain paths)
+/.claude/
+.claude/settings.local.json
+
+# PHP / Composer (the plugin ships no vendored dependencies)
+/vendor/
+composer.lock
+
+# Node (mcp-remote and tooling are client-side, never part of the plugin)
+/node_modules/
+
+# Test, coverage and CI artefacts
+/.phpunit.result.cache
+/phpunit.xml
+/coverage/
+coverage.xml
+coverage.txt
+coverage_percent.txt
+junit.xml
+behat-junit.xml
+phpcs.xml
+phpstan.json
+semgrep-error.json
+trivy-report.json
+summary.md
+/pdepend-report/
+*_failed.txt
+plugin_coverage_output.txt
+plugin_coverage.php
+
+# OS / misc
+Thumbs.db
