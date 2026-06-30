@@ -158,10 +158,24 @@ final class shell {
         }
 
         echo html_writer::start_div('webservice-elediamcp-configuration');
-        echo html_writer::tag(
-            'h2',
-            $fallbackheading ?? get_string('configuration_heading', 'webservice_elediamcp')
-        );
+
+        // Fallback header with optional help action (mirrors Plugin Shell behaviour).
+        $heading = $fallbackheading ?? get_string('configuration_heading', 'webservice_elediamcp');
+        $headinghtml = html_writer::tag('h2', $heading, ['class' => 'webservice-elediamcp-page-title']);
+
+        if (has_capability('moodle/site:config', \core\context\system::instance())) {
+            $helpurl = new moodle_url('/webservice/elediamcp/help.php');
+            $helphtml = html_writer::link(
+                $helpurl,
+                html_writer::tag('i', '', ['class' => 'fa fa-question-circle', 'aria-hidden' => 'true'])
+                    . ' ' . get_string('shell_help_label', 'webservice_elediamcp'),
+                ['class' => 'webservice-elediamcp-fallback-help']
+            );
+            echo html_writer::div($headinghtml . $helphtml, 'webservice-elediamcp-fallback-header');
+        } else {
+            echo $headinghtml;
+        }
+
         $hint = $fallbackhint ?? get_string('configuration_hint', 'webservice_elediamcp');
         if ($hint !== '') {
             echo html_writer::tag('p', $hint, ['class' => 'text-muted']);
