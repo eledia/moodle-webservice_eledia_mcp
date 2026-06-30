@@ -35,14 +35,14 @@ use Exception;
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class tool_exception extends Exception {
-    /** @var array<string, mixed> Optional structured context for the LLM. */
+    /** @var array<string,mixed> Optional structured context for the LLM. */
     private array $context;
 
     /**
      * Constructor.
      *
      * @param string $message Human-readable, LLM-friendly message.
-     * @param array<string, mixed> $context Optional structured context.
+     * @param array $context Optional structured context.
      * @param int $code Optional error code.
      */
     public function __construct(string $message, array $context = [], int $code = 0) {
@@ -53,7 +53,7 @@ class tool_exception extends Exception {
     /**
      * Return the structured context attached to the exception.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public function get_context(): array {
         return $this->context;

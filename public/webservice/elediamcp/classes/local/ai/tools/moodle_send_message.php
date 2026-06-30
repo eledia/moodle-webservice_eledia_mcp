@@ -91,7 +91,7 @@ class moodle_send_message implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -136,7 +136,7 @@ class moodle_send_message implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -176,7 +176,7 @@ class moodle_send_message implements ai_tool {
      * Write tool: readOnlyHint=false, destructiveHint=false (message creation
      * is additive but has external side-effects), idempotentHint=false.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -191,9 +191,9 @@ class moodle_send_message implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         $fromuserid = (int) $user->id;

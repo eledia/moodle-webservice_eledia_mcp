@@ -728,7 +728,7 @@ class server extends webservice_base_server {
     /**
      * Dispatch a tools/call to an AI-native tool implementation.
      *
-     * @param class-string<ai_tool> $class Tool class implementing ai_tool.
+     * @param string $class Tool class implementing ai_tool.
      * @return void
      */
     protected function dispatch_ai_tool(string $class): void {
@@ -912,7 +912,7 @@ class server extends webservice_base_server {
      * Build a standard JSON-RPC error payload from a Moodle exception.
      *
      * @param Exception|null $ex Caught exception.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected function generate_error(?Exception $ex): array {
         if ($ex === null) {

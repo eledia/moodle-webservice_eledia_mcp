@@ -86,7 +86,7 @@ class moodle_forum_discussions implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -126,7 +126,7 @@ class moodle_forum_discussions implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -192,7 +192,7 @@ class moodle_forum_discussions implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -207,9 +207,9 @@ class moodle_forum_discussions implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG;
@@ -247,7 +247,7 @@ class moodle_forum_discussions implements ai_tool {
      * @param stdClass $user The user.
      * @param int $limit Page size for discussions.
      * @param int $offset Page offset for discussions.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function list_course(int $courseid, stdClass $user, int $limit, int $offset): array {
         $usercourses = enrol_get_users_courses((int) $user->id, true, ['id']);
@@ -303,7 +303,7 @@ class moodle_forum_discussions implements ai_tool {
      * @param stdClass $user The user.
      * @param int $limit Page size.
      * @param int $offset Page offset.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function list_discussions(array $cmids, stdClass $user, int $limit, int $offset): array {
         global $DB;
@@ -402,7 +402,7 @@ class moodle_forum_discussions implements ai_tool {
      * @param stdClass $user The user.
      * @param int $limit Page size.
      * @param int $offset Page offset.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function read_posts(int $discussionid, stdClass $user, int $limit, int $offset): array {
         global $DB;

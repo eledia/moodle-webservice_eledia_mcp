@@ -65,7 +65,7 @@ interface ai_tool {
     /**
      * JSON Schema for the input arguments.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array;
 
@@ -73,7 +73,7 @@ interface ai_tool {
      * JSON Schema for the structured output. Must describe the actual shape
      * that {@see execute()} returns.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array;
 
@@ -81,7 +81,7 @@ interface ai_tool {
      * MCP tool annotations (readOnlyHint, destructiveHint, idempotentHint,
      * openWorldHint, title overrides).
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array;
 
@@ -95,9 +95,9 @@ interface ai_tool {
      *   the server can surface them as MCP tool execution errors with
      *   isError: true, instead of JSON-RPC protocol errors.
      *
-     * @param array<string, mixed> $arguments Validated input arguments.
+     * @param array $arguments Validated input arguments.
      * @param stdClass $user Authenticated Moodle user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array;
 }

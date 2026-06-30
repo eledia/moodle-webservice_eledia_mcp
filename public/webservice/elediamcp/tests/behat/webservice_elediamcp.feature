@@ -1,4 +1,4 @@
-@webservice_elediamcp
+@webservice @webservice_elediamcp
 Feature: MCP web service protocol is available
   In order to use the MCP web service
   As an admin

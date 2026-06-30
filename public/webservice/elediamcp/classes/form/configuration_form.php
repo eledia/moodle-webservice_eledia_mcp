@@ -236,7 +236,7 @@ class configuration_form extends moodleform {
      *
      * @param array $data Submitted data.
      * @param array $files Submitted files.
-     * @return array<string, string>
+     * @return array<string,string>
      */
     public function validation($data, $files): array {
         $errors = parent::validation($data, $files);

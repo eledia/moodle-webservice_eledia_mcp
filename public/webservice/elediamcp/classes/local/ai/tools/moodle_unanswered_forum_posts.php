@@ -76,7 +76,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -107,7 +107,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -141,7 +141,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -156,9 +156,9 @@ class moodle_unanswered_forum_posts implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Tool arguments.
+     * @param array $arguments Tool arguments.
      * @param stdClass $user Authenticated user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG;
@@ -212,7 +212,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
      * @param stdClass $course Course record.
      * @param stdClass $user Authenticated user.
      * @param int $since Earliest first-post timestamp.
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string,mixed>>
      */
     private static function course_unanswered(int $courseid, stdClass $course, stdClass $user, int $since): array {
         global $DB;

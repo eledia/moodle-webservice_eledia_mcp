@@ -408,6 +408,7 @@ class token_manager {
      *
      * @param int $userid Token owner.
      * @param bool $includerevoked Whether to include revoked tokens.
+     * @param bool $selfserviceonly Whether to restrict to self-service tokens only.
      * @return stdClass[] Ordered newest first.
      */
     public static function get_user_tokens(

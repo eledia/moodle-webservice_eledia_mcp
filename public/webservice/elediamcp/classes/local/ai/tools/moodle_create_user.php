@@ -68,7 +68,7 @@ class moodle_create_user implements ai_tool {
     /**
      * Return the JSON schema for accepted arguments.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -131,7 +131,7 @@ class moodle_create_user implements ai_tool {
     /**
      * Return the JSON schema for tool output.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -168,7 +168,7 @@ class moodle_create_user implements ai_tool {
     /**
      * Return MCP annotations for this tool.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -183,9 +183,9 @@ class moodle_create_user implements ai_tool {
     /**
      * Execute the tool for the authenticated user.
      *
-     * @param array<string, mixed> $arguments Tool arguments.
+     * @param array $arguments Tool arguments.
      * @param stdClass $user Authenticated Moodle user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG, $DB;

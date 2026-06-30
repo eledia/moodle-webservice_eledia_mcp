@@ -108,6 +108,11 @@ final class shell {
 
     /**
      * Open the page shell and content area.
+     *
+     * @param string $active Active navigation slot identifier.
+     * @param string|null $fallbackheading Heading shown when the Plugin Shell is unavailable.
+     * @param string|null $fallbackhint Hint text shown when the Plugin Shell is unavailable.
+     * @return void
      */
     public static function open(
         string $active = self::ACTIVE_ELEDIAMCP,
@@ -166,6 +171,7 @@ final class shell {
     /**
      * Build the shared AI Tutor/MCP Plugin Shell section navigation.
      *
+     * @param string $active Active navigation slot identifier.
      * @return string Raw HTML for the Plugin Shell `sectionnav` slot.
      */
     private static function sectionnav(string $active): string {

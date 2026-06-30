@@ -1,4 +1,4 @@
-@webservice_elediamcp
+@webservice @webservice_elediamcp
 Feature: MCP token self-service management
   In order to let MCP clients and AI agents act on my behalf
   As a Moodle user

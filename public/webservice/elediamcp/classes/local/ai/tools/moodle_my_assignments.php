@@ -86,7 +86,7 @@ class moodle_my_assignments implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -122,7 +122,7 @@ class moodle_my_assignments implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -167,7 +167,7 @@ class moodle_my_assignments implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -182,9 +182,9 @@ class moodle_my_assignments implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $DB, $CFG;
@@ -419,7 +419,7 @@ class moodle_my_assignments implements ai_tool {
      * Empty payload helper for users with no eligible courses.
      *
      * @param string $statusfilter Active status filter.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function empty_payload(string $statusfilter): array {
         return [
@@ -439,7 +439,7 @@ class moodle_my_assignments implements ai_tool {
      * @param int $total Matching assignments.
      * @param string $status Active status filter.
      * @param int $courseidfilter Course filter (0 = none).
-     * @param array<int, string> $coursemap Map of course id => fullname.
+     * @param array $coursemap Map of course id => fullname.
      * @return string
      */
     private static function build_summary(int $total, string $status, int $courseidfilter, array $coursemap): string {

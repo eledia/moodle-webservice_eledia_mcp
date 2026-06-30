@@ -47,7 +47,7 @@ class moodle_quiz_info implements ai_tool {
     /** @var int Maximum page size. */
     private const MAX_LIMIT = 100;
 
-    /** @var array<int, string> Quiz grade-method constants to labels. */
+    /** @var array<int,string> Quiz grade-method constants to labels. */
     private const GRADE_METHODS = [
         1 => 'highest',
         2 => 'average',
@@ -90,7 +90,7 @@ class moodle_quiz_info implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -125,7 +125,7 @@ class moodle_quiz_info implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -187,7 +187,7 @@ class moodle_quiz_info implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -202,9 +202,9 @@ class moodle_quiz_info implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $DB;
@@ -351,7 +351,7 @@ class moodle_quiz_info implements ai_tool {
      * @param int $userid The user.
      * @param float $sumgrades Quiz sumgrades (for scaling raw marks to the grade).
      * @param float $grademax Quiz maximum grade.
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string,mixed>>
      */
     private static function attempt_history(int $quizid, int $userid, float $sumgrades, float $grademax): array {
         global $DB;
@@ -385,7 +385,7 @@ class moodle_quiz_info implements ai_tool {
      * Empty payload helper.
      *
      * @param int $limit Page size.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function empty_payload(int $limit): array {
         return [

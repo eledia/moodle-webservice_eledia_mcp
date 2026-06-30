@@ -87,7 +87,7 @@ class moodle_search_content implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -119,7 +119,7 @@ class moodle_search_content implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -155,7 +155,7 @@ class moodle_search_content implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -170,9 +170,9 @@ class moodle_search_content implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         $query = trim((string) ($arguments['query'] ?? ''));
@@ -218,7 +218,7 @@ class moodle_search_content implements ai_tool {
      * @param string $query The query.
      * @param int $courseid Course restriction (0 = none).
      * @param int $limit Max results.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function global_search(string $query, int $courseid, int $limit): array {
         // Core_search\manager::search() accepts a stdClass with the same fields
@@ -277,7 +277,7 @@ class moodle_search_content implements ai_tool {
      * @param int $courseid Course restriction (0 = none).
      * @param int $limit Max results.
      * @param stdClass $user The user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function fallback_search(string $query, int $courseid, int $limit, stdClass $user): array {
         $usercourses = enrol_get_users_courses((int) $user->id, true, ['id', 'fullname']);

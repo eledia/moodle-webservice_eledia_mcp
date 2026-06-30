@@ -84,7 +84,7 @@ class moodle_get_resource implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -116,7 +116,7 @@ class moodle_get_resource implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -167,7 +167,7 @@ class moodle_get_resource implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -182,9 +182,9 @@ class moodle_get_resource implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $DB, $CFG;
@@ -356,7 +356,7 @@ class moodle_get_resource implements ai_tool {
      *
      * @param string $modname Module shortname.
      * @param int $instanceid Module instance id.
-     * @param array<string, mixed> $textopts format_text options.
+     * @param array $textopts format_text options.
      * @return string
      */
     private static function generic_intro(string $modname, int $instanceid, array $textopts): string {
@@ -388,7 +388,7 @@ class moodle_get_resource implements ai_tool {
      *
      * @param context_module $context Module context.
      * @param string $modname Module shortname.
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string,mixed>>
      */
     private static function collect_files(context_module $context, string $modname): array {
         $component = 'mod_' . $modname;
@@ -424,7 +424,7 @@ class moodle_get_resource implements ai_tool {
      *
      * @param string $raw Raw content.
      * @param int $format Text format.
-     * @param array<string, mixed> $textopts format_text options.
+     * @param array $textopts format_text options.
      * @return string
      */
     private static function plain(string $raw, int $format, array $textopts): string {
@@ -453,7 +453,7 @@ class moodle_get_resource implements ai_tool {
      * Build a one-sentence summary for the LLM.
      *
      * @param string $modname Module shortname.
-     * @param array<string, mixed> $payload Built payload.
+     * @param array $payload Built payload.
      * @param int $chapterid Requested chapter id (book only).
      * @return string
      */

@@ -488,6 +488,10 @@ final class ai_tools_test extends advanced_testcase {
 
     /**
      * Check whether a user has any enrolment record in a course.
+     *
+     * @param int $userid User id.
+     * @param int $courseid Course id.
+     * @return bool
      */
     private function is_user_enrolled_in_course(int $userid, int $courseid): bool {
         global $DB;

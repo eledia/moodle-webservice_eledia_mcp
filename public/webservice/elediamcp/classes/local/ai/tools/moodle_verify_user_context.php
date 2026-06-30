@@ -80,7 +80,7 @@ class moodle_verify_user_context implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -113,7 +113,7 @@ class moodle_verify_user_context implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -177,7 +177,7 @@ class moodle_verify_user_context implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -192,9 +192,9 @@ class moodle_verify_user_context implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG, $SITE;
@@ -348,7 +348,7 @@ class moodle_verify_user_context implements ai_tool {
      * Build a natural-language summary suitable for an LLM system prompt.
      *
      * @param stdClass $user Authenticated user.
-     * @param array<int, array<string, mixed>> $courses Course list (already filtered).
+     * @param array $courses Course list (already filtered).
      * @param bool $isadmin Whether the user is a site administrator.
      * @return string
      */

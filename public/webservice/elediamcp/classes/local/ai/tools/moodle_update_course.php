@@ -66,7 +66,7 @@ class moodle_update_course implements ai_tool {
     /**
      * Return the JSON schema for tool input.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -121,7 +121,7 @@ class moodle_update_course implements ai_tool {
     /**
      * Return the JSON schema for tool output.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -159,7 +159,7 @@ class moodle_update_course implements ai_tool {
     /**
      * Return MCP tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -174,9 +174,9 @@ class moodle_update_course implements ai_tool {
     /**
      * Execute the course update.
      *
-     * @param array<string, mixed> $arguments Tool arguments.
+     * @param array $arguments Tool arguments.
      * @param stdClass $user Authenticated Moodle user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG, $DB;
@@ -289,7 +289,7 @@ class moodle_update_course implements ai_tool {
     /**
      * Course output schema properties.
      *
-     * @return array<string, array<string, string>>
+     * @return array<string, array<string,string>>
      */
     private static function course_schema_properties(): array {
         return [
@@ -307,8 +307,8 @@ class moodle_update_course implements ai_tool {
     /**
      * Add a changed field to the update record and preview list.
      *
-     * @param array<string, mixed> $updates Update record.
-     * @param array<int, array<string, mixed>> $changes Preview changes.
+     * @param array $updates Update record.
+     * @param array $changes Preview changes.
      * @param string $field Field name.
      * @param mixed $from Current value.
      * @param mixed $to New value.
@@ -329,7 +329,7 @@ class moodle_update_course implements ai_tool {
      * Format a course record for the tool response.
      *
      * @param stdClass $course Course record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function course_output(stdClass $course): array {
         return [

@@ -6,21 +6,21 @@ body#page-webservice-elediamcp-configuration #page .drawer-right-toggle,
 .path-webservice-elediamcp #block-region-side-pre,
 .path-webservice-elediamcp .drawer-toggles .drawer-right-toggle,
 .path-webservice-elediamcp #page .drawer-right-toggle {
-    display: none !important;
+    display: none !important; /* stylelint-disable-line declaration-no-important */
 }
 
 body#page-webservice-elediamcp-configuration,
 body.path-webservice-elediamcp {
-    margin-right: 0 !important;
-    transition: none !important;
+    margin-right: 0 !important; /* stylelint-disable-line declaration-no-important */
+    transition: none !important; /* stylelint-disable-line declaration-no-important */
 }
 
 body#page-webservice-elediamcp-configuration #page.drawers,
 body#page-webservice-elediamcp-configuration #page.drawers.show-drawer-right,
 body.path-webservice-elediamcp #page.drawers,
 body.path-webservice-elediamcp #page.drawers.show-drawer-right {
-    margin-right: 0 !important;
-    padding-right: 0 !important;
+    margin-right: 0 !important; /* stylelint-disable-line declaration-no-important */
+    padding-right: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
 .webservice-elediamcp-form {
@@ -131,7 +131,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 
 .webservice-elediamcp-card .felement,
 .webservice-elediamcp-card .checkbox {
-    display: block !important;
+    display: block !important; /* stylelint-disable-line declaration-no-important */
     grid-column: 2;
     max-width: none;
     min-width: 0;
@@ -163,7 +163,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 
 .webservice-elediamcp-card .fitem.femptylabel .col-form-label,
 .webservice-elediamcp-card .mb-3.femptylabel .col-form-label {
-    display: none !important;
+    display: none !important; /* stylelint-disable-line declaration-no-important */
 }
 
 .webservice-elediamcp-card .fitem.femptylabel .felement,
@@ -186,16 +186,16 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-card .checkbox {
     grid-column: 2;
-    padding-left: 0 !important;
+    padding-left: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-card .form-check {
-    padding-left: 0 !important;
+    padding-left: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
 .webservice-elediamcp-card .form-check-input {
     flex: 0 0 auto;
-    margin-left: 0 !important;
+    margin-left: 0 !important; /* stylelint-disable-line declaration-no-important */
     margin-top: 0.25rem;
 }
 
@@ -214,12 +214,12 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 }
 
 .webservice-elediamcp-card textarea {
-    width: min(100%, 42rem);
+    width: min(100%, 42rem); /* stylelint-disable-line csstree/validator */
 }
 
 .webservice-elediamcp-card select[multiple] {
     min-height: 8rem;
-    width: min(100%, 42rem);
+    width: min(100%, 42rem); /* stylelint-disable-line csstree/validator */
 }
 
 .webservice-elediamcp-card input[type="checkbox"] {
@@ -366,7 +366,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 }
 
 .webservice-elediamcp-token-table {
-    border: 0 !important;
+    border: 0 !important; /* stylelint-disable-line declaration-no-important */
     border-collapse: collapse;
     border-style: hidden;
     font-size: 0.9rem;
@@ -377,16 +377,16 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 .webservice-elediamcp-token-table thead,
 .webservice-elediamcp-token-table tbody,
 .webservice-elediamcp-token-table tr {
-    border-left: 0 !important;
-    border-right: 0 !important;
+    border-left: 0 !important; /* stylelint-disable-line declaration-no-important */
+    border-right: 0 !important; /* stylelint-disable-line declaration-no-important */
 }
 
 .webservice-elediamcp-token-table th,
 .webservice-elediamcp-token-table td {
     border-bottom: 1px solid var(--lh-border, #dbe7ee);
-    border-left: 0 !important;
-    border-right: 0 !important;
-    border-top: 0 !important;
+    border-left: 0 !important; /* stylelint-disable-line declaration-no-important */
+    border-right: 0 !important; /* stylelint-disable-line declaration-no-important */
+    border-top: 0 !important; /* stylelint-disable-line declaration-no-important */
     padding: 0.95rem 0.8rem;
     text-align: left;
     vertical-align: middle;
@@ -515,7 +515,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem,
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .form-group,
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .mb-3 {
-    display: grid !important;
+    display: grid !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fdescription.required {
@@ -547,13 +547,13 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fgroup_id_buttonar .felement .fitem {
     border-bottom: 0;
-    display: block !important;
+    display: block !important; /* stylelint-disable-line declaration-no-important */
     padding: 0;
 }
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .felement {
-    align-items: center !important;
-    display: flex !important;
+    align-items: center !important; /* stylelint-disable-line declaration-no-important */
+    display: flex !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil fieldset {
@@ -563,7 +563,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector {
     align-items: center;
-    display: flex !important;
+    display: flex !important; /* stylelint-disable-line declaration-no-important */
     flex-wrap: wrap;
     font-size: 0;
     gap: 0.55rem 1rem;
@@ -573,7 +573,7 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > .fitem,
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > label.fitem {
     border: 0;
-    display: block !important;
+    display: block !important; /* stylelint-disable-line declaration-no-important */
     margin: 0;
     padding: 0;
 }
@@ -582,14 +582,15 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
     font-size: 0.9rem;
 }
 
-#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil .fdate_selector > label.form-check.fitem,
+#page-webservice-elediamcp-configuration .webservice-elediamcp-token-card
+#fitem_id_validuntil .fdate_selector > label.form-check.fitem,
 #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card #fitem_id_validuntil label.form-check {
     align-items: center;
     background: transparent;
     border: 0;
     border-radius: 0;
     color: var(--bs-body-color, var(--lh-text, #1f2937));
-    display: inline-flex !important;
+    display: inline-flex !important; /* stylelint-disable-line declaration-no-important */
     font-family: var(--bs-body-font-family, inherit);
     font-size: var(--bs-body-font-size, 1rem);
     font-weight: 400;
@@ -643,9 +644,9 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 }
 
 .webservice-elediamcp-guide-card pre {
-    background: rgba(248, 251, 253, 0.94) !important;
-    border-color: var(--lh-border, #dbe7ee) !important;
-    border-radius: var(--lh-radius-sm, 8px) !important;
+    background: rgba(248, 251, 253, 0.94) !important; /* stylelint-disable-line declaration-no-important */
+    border-color: var(--lh-border, #dbe7ee) !important; /* stylelint-disable-line declaration-no-important */
+    border-radius: var(--lh-radius-sm, 8px) !important; /* stylelint-disable-line declaration-no-important */
     color: var(--lh-text, #1f2937);
     font-size: 0.78rem;
     line-height: 1.45;
@@ -672,13 +673,13 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
 }
 
 #page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) {
-    align-items: center !important;
-    display: flex !important;
+    align-items: center !important; /* stylelint-disable-line declaration-no-important */
+    display: flex !important; /* stylelint-disable-line declaration-no-important */
     gap: 0.5rem;
 }
 
 #page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) > .w-100 {
-    width: auto !important;
+    width: auto !important; /* stylelint-disable-line declaration-no-important */
 }
 
 #page-webservice-elediamcp-configuration #admin-tools .felement:has(#id_submitbutton) .fitem {
@@ -709,6 +710,6 @@ body.path-webservice-elediamcp #page.drawers.show-drawer-right {
     #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .fitem,
     #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .form-group,
     #page-webservice-elediamcp-configuration .webservice-elediamcp-token-card .mb-3 {
-        display: block !important;
+        display: block !important; /* stylelint-disable-line declaration-no-important */
     }
 }

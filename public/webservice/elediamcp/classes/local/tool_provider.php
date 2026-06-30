@@ -76,7 +76,7 @@ class tool_provider {
      *
      * @param string $token External service token.
      * @param string $protocolversion Negotiated MCP protocol version.
-     * @return array<int, array<string, mixed>> Tool definitions ready for tools/list.
+     * @return array<int, array<string,mixed>> Tool definitions ready for tools/list.
      */
     public static function get_tools(string $token, string $protocolversion = protocol::LATEST): array {
         $tools = self::get_ai_tools($protocolversion);
@@ -93,7 +93,7 @@ class tool_provider {
      *
      * @param string $token External service token.
      * @param string $protocolversion Negotiated MCP protocol version.
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string,mixed>>
      */
     public static function get_raw_function_tools(string $token, string $protocolversion = protocol::LATEST): array {
         global $DB;
@@ -132,7 +132,7 @@ class tool_provider {
      * Retrieve the AI-native tool definitions.
      *
      * @param string $protocolversion Negotiated MCP protocol version.
-     * @return array<int, array<string, mixed>>
+     * @return array<int, array<string,mixed>>
      */
     public static function get_ai_tools(string $protocolversion = protocol::LATEST): array {
         $tools = [];
@@ -180,10 +180,10 @@ class tool_provider {
     /**
      * Apply pagination to a list of tools.
      *
-     * @param array<int, array<string, mixed>> $tools Full set of tools.
+     * @param array $tools Full set of tools.
      * @param string|null $cursor Opaque cursor supplied by the client.
      * @param int|null $pagesize Optional override for the page size.
-     * @return array{tools: array<int, array<string, mixed>>, nextCursor: string|null}
+     * @return array{tools:array<int,array<string,mixed>>,nextCursor:string|null}
      */
     public static function paginate(array $tools, ?string $cursor, ?int $pagesize = null): array {
         $size = $pagesize ?? security::tools_page_size();
@@ -233,7 +233,7 @@ class tool_provider {
      *
      * @param object $info external_function_info() result.
      * @param string $protocolversion Negotiated MCP protocol version.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected static function format_raw_tool(object $info, string $protocolversion): array {
         $inputschema = self::build_schema($info->parameters_desc);
@@ -261,9 +261,9 @@ class tool_provider {
      * Wrap an output schema in the legacy {result: ...} envelope when the
      * negotiated protocol version requires it.
      *
-     * @param array<string, mixed> $schema Canonical output schema.
+     * @param array $schema Canonical output schema.
      * @param string $protocolversion Negotiated MCP protocol version.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected static function wrap_output_schema(array $schema, string $protocolversion): array {
         if (!protocol::uses_result_envelope($protocolversion)) {
@@ -286,7 +286,7 @@ class tool_provider {
      * *_submit_* perform writes that are typically not idempotent.
      *
      * @param object $info external_function_info() result.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function infer_annotations(object $info): array {
         $name = strtolower($info->name);
@@ -317,7 +317,7 @@ class tool_provider {
      * Build a JSON Schema from an external description object.
      *
      * @param external_description|null $desc External description.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function build_schema(?external_description $desc): array {
         if ($desc === null) {
@@ -330,7 +330,7 @@ class tool_provider {
      * Generate a JSON Schema fragment from an external description.
      *
      * @param external_description $param External description.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     protected static function generate_schema(external_description $param): array {
         $type = self::get_schema_type($param);

@@ -69,7 +69,7 @@ class moodle_grading_queue implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -99,7 +99,7 @@ class moodle_grading_queue implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -133,7 +133,7 @@ class moodle_grading_queue implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -148,9 +148,9 @@ class moodle_grading_queue implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Tool arguments.
+     * @param array $arguments Tool arguments.
      * @param stdClass $user Authenticated user.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $DB;

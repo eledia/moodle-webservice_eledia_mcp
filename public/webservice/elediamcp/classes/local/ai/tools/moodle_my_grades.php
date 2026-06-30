@@ -76,7 +76,7 @@ class moodle_my_grades implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -100,7 +100,7 @@ class moodle_my_grades implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -151,7 +151,7 @@ class moodle_my_grades implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -166,9 +166,9 @@ class moodle_my_grades implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         global $CFG;
@@ -311,8 +311,8 @@ class moodle_my_grades implements ai_tool {
      * @param int $courseid Course id.
      * @param int $userid User id.
      * @param bool $isadmin Whether the user is a site admin.
-     * @param array<string, mixed> $stringopts format_string options.
-     * @return array<int, array<string, mixed>>
+     * @param array $stringopts format_string options.
+     * @return array<int, array<string,mixed>>
      */
     private static function collect_items(int $courseid, int $userid, bool $isadmin, array $stringopts): array {
         $items = grade_item::fetch_all(['courseid' => $courseid]);

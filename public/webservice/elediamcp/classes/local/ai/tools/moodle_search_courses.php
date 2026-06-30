@@ -86,7 +86,7 @@ class moodle_search_courses implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -124,7 +124,7 @@ class moodle_search_courses implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         return [
@@ -162,7 +162,7 @@ class moodle_search_courses implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -178,9 +178,9 @@ class moodle_search_courses implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         $userid = (int) $user->id;
@@ -301,7 +301,7 @@ class moodle_search_courses implements ai_tool {
      * @param string $query Optional substring filter ('' lists all enrolled courses).
      * @param int $limit Page size.
      * @param int $offset Page offset.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function list_enrolled(stdClass $user, string $query, int $limit, int $offset): array {
         $my = moodle_my_courses::execute([
@@ -351,7 +351,7 @@ class moodle_search_courses implements ai_tool {
      * Resolve a category name with a small in-request memo.
      *
      * @param int $categoryid Category id.
-     * @param array<string, mixed> $stringopts format_string options.
+     * @param array $stringopts format_string options.
      * @return string
      */
     private static function category_name(int $categoryid, array $stringopts): string {

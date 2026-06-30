@@ -93,7 +93,7 @@ class moodle_find_user implements ai_tool {
     /**
      * Input schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function input_schema(): array {
         return [
@@ -124,7 +124,7 @@ class moodle_find_user implements ai_tool {
     /**
      * Output schema.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function output_schema(): array {
         $userentry = [
@@ -164,7 +164,7 @@ class moodle_find_user implements ai_tool {
     /**
      * Tool annotations.
      *
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function annotations(): array {
         return [
@@ -179,9 +179,9 @@ class moodle_find_user implements ai_tool {
     /**
      * Execute the tool.
      *
-     * @param array<string, mixed> $arguments Validated arguments.
+     * @param array $arguments Validated arguments.
      * @param stdClass $user Authenticated user record.
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     public static function execute(array $arguments, stdClass $user): array {
         $userid = (int) $user->id;
@@ -274,7 +274,7 @@ class moodle_find_user implements ai_tool {
      * Normalise a member record returned by helper::get_member_info.
      *
      * @param object|array $member
-     * @return array<string, mixed>
+     * @return array<string,mixed>
      */
     private static function normalise_match($member): array {
         if (is_array($member)) {
@@ -320,8 +320,8 @@ class moodle_find_user implements ai_tool {
      * @param int $userid Authenticated (sending) user id.
      * @param string $query Raw name fragment.
      * @param int $limit Maximum number of matches to return.
-     * @param array<int, bool> $excludeids Ids already present in another bucket.
-     * @return array<int, array<string, mixed>> Normalised match entries.
+     * @param array $excludeids Ids already present in another bucket.
+     * @return array<int, array<string,mixed>> Normalised match entries.
      */
     private static function privileged_search(int $userid, string $query, int $limit, array $excludeids): array {
         global $DB;
@@ -385,8 +385,8 @@ class moodle_find_user implements ai_tool {
      * Build a one-line summary.
      *
      * @param string $query
-     * @param array<int, array<string, mixed>> $contacts
-     * @param array<int, array<string, mixed>> $noncontacts
+     * @param array $contacts
+     * @param array $noncontacts
      * @return string
      */
     private static function build_summary(string $query, array $contacts, array $noncontacts): string {
