@@ -1,0 +1,366 @@
+name: Moodle Plugin CI
+
+# Runs on every branch (the eLeDia repos mirror GitLab branches such as 51, 52,
+# review_johannes and master rather than main/dev).
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: ['**']
+  workflow_dispatch:
+
+# Default permissions for every job; individual jobs may widen via `permissions:`.
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: PHP ${{ matrix.php-version }} · ${{ matrix.database }} · ${{ matrix.moodle-branch }}
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_HOST_AUTH_METHOD: trust
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=8
+
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: ''
+          MYSQL_ALLOW_EMPTY_PASSWORD: "true"
+          MYSQL_CHARACTER_SET_SERVER: "utf8mb4"
+          MYSQL_COLLATION_SERVER: "utf8mb4_unicode_ci"
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=8
+
+    strategy:
+      fail-fast: false
+      matrix:
+        php-version: ['8.2', '8.3', '8.4']
+        database: ['pgsql', 'mariadb']
+        moodle-branch: ['MOODLE_501_STABLE']
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+        with:
+          path: repo
+
+      # This repository wraps the plugin under public/<type>/<name> (it mirrors a
+      # Moodle 5.x docroot), so the actual plugin directory is resolved here and
+      # passed to moodle-plugin-ci, rather than assuming the repo root is the plugin.
+      - name: Resolve nested plugin directory
+        id: plugin
+        run: |
+          dir=$(find repo/public -maxdepth 4 -type f -name version.php -printf '%h\n' | head -n1)
+          if [ -z "$dir" ]; then
+            echo "::error::No version.php found under repo/public — cannot locate the plugin." >&2
+            exit 1
+          fi
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "Resolved plugin directory: $dir"
+
+      - name: Setup Node.js (for Grunt, JS & SCSS)
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+
+      - name: Setup PHP ${{ matrix.php-version }}
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php-version }}
+          extensions: mbstring, sodium, pgsql, mysqli, intl, gd, zip, xml, soap, exif, opcache
+          ini-values: max_input_vars=5000, error_reporting=E_ALL, display_errors=On
+          coverage: none
+          tools: composer
+
+      - name: Initialise the database services
+        run: |
+          if [ "$DB" = "pgsql" ]; then
+            until pg_isready -h 127.0.0.1 -p 5432; do echo "waiting for postgres..."; sleep 2; done
+          else
+            until mysqladmin -h 127.0.0.1 -P 3306 --silent ping; do echo "waiting for mariadb..."; sleep 2; done
+          fi
+        env:
+          DB: ${{ matrix.database }}
+
+      - name: Install moodle-plugin-ci
+        run: |
+          composer create-project -n --no-dev --prefer-dist moodlehq/moodle-plugin-ci ci ^4
+          echo "$(cd ci/bin && pwd)" >> "$GITHUB_PATH"
+          echo "$(cd ci/vendor/bin && pwd)" >> "$GITHUB_PATH"
+          sudo locale-gen en_AU.UTF-8
+
+      - name: Install Moodle + plugin
+        env:
+          DB: ${{ matrix.database }}
+          MOODLE_BRANCH: ${{ matrix.moodle-branch }}
+          IGNORE_PATHS: 'docs'
+        run: moodle-plugin-ci install --plugin "${{ steps.plugin.outputs.dir }}" --db-host=127.0.0.1 -vvv
+
+      # ----------------------------- Static checks -----------------------------
+      - name: PHP Lint
+        if: ${{ always() }}
+        run: moodle-plugin-ci phplint
+
+      - name: Detect code duplication
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpcpd || true
+
+      - name: PHP Mess Detector
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpmd
+
+      - name: Moodle Code Checker (PHPCS)
+        if: ${{ always() }}
+        run: moodle-plugin-ci codechecker --max-warnings 0
+
+      - name: Validate plugin metadata
+        if: ${{ always() }}
+        run: moodle-plugin-ci validate
+
+      - name: Verify upgrade savepoints
+        if: ${{ always() }}
+        run: moodle-plugin-ci savepoints
+
+      - name: Check Mustache templates
+        if: ${{ always() }}
+        run: moodle-plugin-ci mustache
+
+      - name: Grunt (JS / SCSS)
+        if: ${{ always() }}
+        run: moodle-plugin-ci grunt --max-lint-warnings 0
+
+      - name: PHPDoc checks
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpdoc --max-warnings 0
+
+      # ----------------------------- Test suites -----------------------------
+      - name: PHPUnit
+        if: ${{ always() }}
+        run: moodle-plugin-ci phpunit --fail-on-warning
+
+      - name: Behat (Chrome)
+        if: ${{ always() }}
+        run: moodle-plugin-ci behat --profile chrome --auto-rerun 1
+
+      # ----------------------------- Logs on failure -----------------------------
+      - name: Upload Behat failure screenshots
+        if: ${{ failure() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: behat-failures-${{ matrix.php-version }}-${{ matrix.database }}
+          path: |
+            moodledata/behat_dump/**
+            moodledata/behat/**
+            ci/var/log/**
+          if-no-files-found: ignore
+          retention-days: 7
+
+  # ===========================================================================
+  # Security scan: Semgrep (SAST) + Trivy (filesystem / dependency / secrets).
+  # Runs once per push/PR, independent of the PHP × DB matrix.
+  # SARIF results are uploaded to the GitHub Security → Code scanning tab.
+  # ===========================================================================
+  security-scan:
+    name: Security scan (Semgrep + Trivy)
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write   # upload SARIF
+      actions: read            # required by codeql-action on private repos
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      # --------------------------- Semgrep (SAST) ----------------------------
+      - name: Setup Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      # Pin Semgrep via pip so we don't depend on a deprecated action wrapper.
+      - name: Install Semgrep
+        run: pip install --upgrade 'semgrep>=1.86'
+
+      - name: Run Semgrep
+        run: |
+          semgrep scan \
+            --config p/php \
+            --config p/security-audit \
+            --config p/owasp-top-ten \
+            --config p/secrets \
+            --severity ERROR --severity WARNING \
+            --sarif --output semgrep.sarif \
+            --metrics off \
+            --error || true
+          # `--error` makes the CLI exit non-zero on findings, but we swallow
+          # the exit code so the SARIF upload step always runs. The findings
+          # themselves drive build status via the Security tab.
+
+      - name: Upload Semgrep SARIF
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: semgrep.sarif
+          category: semgrep
+
+      # ---------------------- Trivy (filesystem scan) ------------------------
+      - name: Run Trivy filesystem scan (SARIF)
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: sarif
+          output: trivy.sarif
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: true
+          exit-code: '0'
+          skip-dirs: 'docs,node_modules,vendor'
+
+      - name: Upload Trivy SARIF
+        if: ${{ always() }}
+        uses: github/codeql-action/upload-sarif@v4
+        with:
+          sarif_file: trivy.sarif
+          category: trivy
+
+      - name: Trivy filesystem scan (job-log table)
+        if: ${{ always() }}
+        uses: aquasecurity/trivy-action@v0.36.0
+        with:
+          scan-type: fs
+          scan-ref: .
+          format: table
+          severity: CRITICAL,HIGH,MEDIUM
+          ignore-unfixed: true
+          exit-code: '0'
+          skip-dirs: 'docs,node_modules,vendor'
+
+  # ===========================================================================
+  # Code-quality metrics: PHPDepend complexity / coupling / inheritance.
+  # Advisory only — never fails the build — but renders a Markdown summary
+  # into the workflow run and uploads pyramid + jdepend charts as artefacts.
+  # ===========================================================================
+  metrics:
+    name: PHPDepend metrics
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+
+      - name: Resolve nested plugin directory
+        id: plugin
+        run: |
+          dir=$(find public -maxdepth 4 -type f -name version.php -printf '%h\n' | head -n1)
+          if [ -z "$dir" ]; then
+            echo "::error::No version.php found under public — cannot locate the plugin." >&2
+            exit 1
+          fi
+          echo "dir=$dir" >> "$GITHUB_OUTPUT"
+          echo "Resolved plugin directory: $dir"
+
+      - name: Setup PHP 8.3
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          coverage: none
+          tools: composer
+          extensions: dom, xml, mbstring
+
+      - name: Install PHPDepend (via Composer)
+        run: |
+          # `shivammathur/setup-php`'s `tools: pdepend` option silently fails
+          # on Ubuntu 24.04 runners (PHAR mirror flakiness), so we install
+          # PHPDepend explicitly via Composer and expose its bin directory.
+          composer global require --no-interaction --no-progress pdepend/pdepend:^2.16
+          COMPOSER_BIN="$(composer global config bin-dir --absolute --quiet)"
+          echo "$COMPOSER_BIN" >> "$GITHUB_PATH"
+          "$COMPOSER_BIN/pdepend" --version
+
+      - name: Run PHPDepend
+        run: |
+          PD="${{ steps.plugin.outputs.dir }}"
+          mkdir -p build/pdepend
+          # Only feed PHPDepend the source paths that actually exist in this plugin.
+          SRC=""
+          for p in classes lib.php index.php settings.php externallib.php externalsettings.php db; do
+            [ -e "$PD/$p" ] && SRC="${SRC:+$SRC,}$PD/$p"
+          done
+          [ -n "$SRC" ] || SRC="$PD"
+          pdepend \
+            --summary-xml=build/pdepend/summary.xml \
+            --jdepend-xml=build/pdepend/jdepend.xml \
+            --jdepend-chart=build/pdepend/jdepend.svg \
+            --overview-pyramid=build/pdepend/pyramid.svg \
+            "$SRC"
+
+      - name: Render PHPDepend summary
+        if: ${{ always() }}
+        run: |
+          python3 - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import xml.etree.ElementTree as ET
+          from pathlib import Path
+
+          summary = Path('build/pdepend/summary.xml')
+          if not summary.exists():
+              print('## 📊 PHPDepend metrics')
+              print()
+              print('_PHPDepend produced no summary XML — see job log._')
+              raise SystemExit(0)
+
+          root = ET.parse(summary).getroot()
+          m = root.attrib
+
+          rows = [
+              ('Packages',                       'nop'),
+              ('Classes',                        'noc'),
+              ('Concrete classes',               'nocc'),
+              ('Abstract classes',               'noac'),
+              ('Interfaces',                     'noi'),
+              ('Methods',                        'nom'),
+              ('Functions',                      'nof'),
+              ('Lines of code',                  'loc'),
+              ('Non-comment lines of code',      'ncloc'),
+              ('Comment lines of code',          'cloc'),
+              ('Executable lines',               'eloc'),
+              ('Cyclomatic complexity (CCN)',    'ccn'),
+              ('Extended cyclomatic complexity', 'ccn2'),
+          ]
+
+          print('## 📊 PHPDepend metrics')
+          print()
+          print('| Metric | Value |')
+          print('|---|---:|')
+          for label, key in rows:
+              value = m.get(key, '—')
+              print(f'| {label} | {value} |')
+          print()
+          print('Charts (`pyramid.svg`, `jdepend.svg`) and the raw XML reports')
+          print('are available as the **`pdepend-metrics`** artefact on this run.')
+          PY
+
+      - name: Upload PHPDepend artefacts
+        if: ${{ always() }}
+        uses: actions/upload-artifact@v6
+        with:
+          name: pdepend-metrics
+          path: build/pdepend/**
+          if-no-files-found: warn
+          retention-days: 30
