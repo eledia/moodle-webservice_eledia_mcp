@@ -47,11 +47,6 @@ jobs:
           --health-timeout=5s
           --health-retries=8
 
-      selenium:
-        image: selenium/standalone-chrome:4
-        ports:
-          - 4444:4444
-
     strategy:
       fail-fast: false
       matrix:
@@ -159,9 +154,25 @@ jobs:
         if: ${{ always() }}
         run: moodle-plugin-ci phpunit --fail-on-warning
 
+      # moodle-plugin-ci launches its own Selenium container via Docker. Pre-pull
+      # the image (with retries) so a transient Docker Hub 5xx doesn't fail the job,
+      # then point the behat step at that exact, locally-cached tag.
+      - name: Pre-pull Selenium image
+        if: ${{ always() }}
+        run: |
+          for attempt in 1 2 3 4 5; do
+            if docker pull selenium/standalone-chrome:4; then
+              exit 0
+            fi
+            echo "::warning::Selenium image pull failed (attempt $attempt/5); retrying in 10s"
+            sleep 10
+          done
+          echo "::error::Could not pull selenium/standalone-chrome:4 after 5 attempts"
+          exit 1
+
       - name: Behat (Chrome)
         if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome --auto-rerun 1 --selenium http://localhost:4444
+        run: moodle-plugin-ci behat --profile chrome --auto-rerun 1 --selenium selenium/standalone-chrome:4
 
       # ----------------------------- Logs on failure -----------------------------
       - name: Upload Behat failure screenshots
