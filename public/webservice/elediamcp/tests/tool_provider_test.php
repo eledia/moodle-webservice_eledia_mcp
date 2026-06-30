@@ -343,4 +343,37 @@ final class tool_provider_test extends externallib_advanced_testcase {
         $this->assertArrayHasKey('properties', $rawlegacy['outputSchema']);
         $this->assertArrayHasKey('result', $rawlegacy['outputSchema']['properties']);
     }
+
+    /**
+     * The learner-context tools (identity and courses) must stay in the free
+     * baseline. The eLeDia.ai Tutor's whole design relies on the RAG/Tutor
+     * server calling back into Moodle to learn who the learner is and which
+     * courses they take, so these tools must never become premium-gated.
+     */
+    public function test_context_tools_are_never_premium_gated(): void {
+        $this->resetAfterTest();
+
+        $contexttools = [
+            'moodle_verify_user_context',
+            'moodle_me',
+            'moodle_my_courses',
+            'moodle_course_contents',
+            'moodle_get_resource',
+            'moodle_my_grades',
+            'moodle_my_progress',
+            'moodle_my_assignments',
+        ];
+
+        $allnames = \webservice_elediamcp\local\ai\registry::names();
+        $premiumnames = tool_provider::premium_ai_tool_names();
+
+        foreach ($contexttools as $name) {
+            $this->assertContains($name, $allnames, "{$name} should be a registered AI tool");
+            $this->assertNotContains(
+                $name,
+                $premiumnames,
+                "{$name} must stay in the free baseline (learner-context fetching is never premium-gated)"
+            );
+        }
+    }
 }

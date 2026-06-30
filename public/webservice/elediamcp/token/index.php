@@ -56,13 +56,56 @@ $usercontext = \core\context\user::instance($USER->id);
 
 require_capability('webservice/elediamcp:managetokens', $systemcontext);
 
-$baseurl = new moodle_url('/webservice/elediamcp/token/index.php');
+// When opened from a tutor block's instance shell (a blockid the viewer can manage),
+// render that block's instance shell so the Settings / Tutor / Preview / MCP menu
+// persists, instead of the MCP plugin's own (admin-oriented) shell.
+$blockid = optional_param('blockid', 0, PARAM_INT);
+$blockshell = '\\block_eledia_aitutor\\output\\shell';
+$useinstanceshell = false;
+if ($blockid > 0 && class_exists($blockshell) && method_exists($blockshell, 'open_instance')) {
+    $blockrecord = $DB->get_record('block_instances', ['id' => $blockid, 'blockname' => 'eledia_aitutor']);
+    if ($blockrecord && has_capability('block/eledia_aitutor:manage', \core\context\block::instance($blockid))) {
+        $useinstanceshell = true;
+    }
+}
+
+$baseurl = new moodle_url(
+    '/webservice/elediamcp/token/index.php',
+    $useinstanceshell ? ['blockid' => $blockid] : []
+);
+
+$requireshellcss = function () use ($useinstanceshell, $blockshell): void {
+    shell::require_css();
+    if ($useinstanceshell) {
+        $blockshell::require_css();
+    }
+};
+$openshell = function () use ($useinstanceshell, $blockshell, $blockid): void {
+    if ($useinstanceshell) {
+        $blockshell::open_instance($blockid, $blockshell::ACTIVE_INSTANCE_MCP);
+        return;
+    }
+    shell::open(shell::ACTIVE_TOKENS, get_string('tokens_heading', 'webservice_elediamcp'), '');
+};
+$closeshell = function () use ($useinstanceshell, $blockshell): void {
+    if ($useinstanceshell) {
+        $blockshell::close();
+        return;
+    }
+    shell::close();
+};
 
 $PAGE->set_url($baseurl);
-$PAGE->set_context($usercontext);
-$PAGE->set_pagelayout('admin');
+if ($useinstanceshell) {
+    $PAGE->set_context(\core\context\block::instance($blockid));
+    $PAGE->set_pagelayout('standard');
+    $PAGE->set_heading('');
+} else {
+    $PAGE->set_context($usercontext);
+    $PAGE->set_pagelayout('admin');
+    $PAGE->set_heading(fullname($USER));
+}
 $PAGE->set_title(get_string('tokens_heading', 'webservice_elediamcp'));
-$PAGE->set_heading(fullname($USER));
 $PAGE->navbar->add(get_string('tokens_heading', 'webservice_elediamcp'), $baseurl);
 
 // Build the list of MCP services the current user may create a token for.
@@ -136,9 +179,9 @@ if ($action === 'revoke' && $tokenid) {
         );
     }
 
-    shell::require_css();
+    $requireshellcss();
     echo $OUTPUT->header();
-    shell::open(shell::ACTIVE_TOKENS, get_string('tokens_heading', 'webservice_elediamcp'), '');
+    $openshell();
     echo $OUTPUT->confirm(
         get_string('token_revoke_confirm', 'webservice_elediamcp', s($record->name)),
         new moodle_url($baseurl, [
@@ -149,7 +192,7 @@ if ($action === 'revoke' && $tokenid) {
         ]),
         $baseurl
     );
-    shell::close();
+    $closeshell();
     echo $OUTPUT->footer();
     die;
 }
@@ -183,9 +226,9 @@ if (!empty($usableservices)) {
     }
 }
 
-shell::require_css();
+$requireshellcss();
 echo $OUTPUT->header();
-shell::open(shell::ACTIVE_TOKENS, get_string('tokens_heading', 'webservice_elediamcp'), '');
+$openshell();
 echo html_writer::start_div('webservice-elediamcp-page-content');
 echo html_writer::div(
     get_string('tokens_intro', 'webservice_elediamcp'),
@@ -333,5 +376,5 @@ echo html_writer::div(
 echo html_writer::end_tag('section');
 
 echo html_writer::end_div();
-shell::close();
+$closeshell();
 echo $OUTPUT->footer();

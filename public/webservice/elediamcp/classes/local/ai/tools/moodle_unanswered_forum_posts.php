@@ -235,7 +235,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
 
             $forum = $DB->get_record('forum', ['id' => (int) $cm->instance], '*', MUST_EXIST);
             $sql = "SELECT d.id, d.id AS discussionid, d.course, d.forum, d.groupid,
-                           d.firstpost, d.name, d.timemodified,
+                           d.firstpost, d.name, d.timemodified, d.timestart, d.timeend,
                            p.userid, p.created, p.subject, COUNT(r.id) AS replycount
                       FROM {forum_discussions} d
                       JOIN {forum_posts} p ON p.id = d.firstpost
@@ -246,7 +246,7 @@ class moodle_unanswered_forum_posts implements ai_tool {
                      WHERE d.forum = :forumid
                        AND p.created >= :since
                   GROUP BY d.id, d.course, d.forum, d.groupid, d.firstpost, d.name, d.timemodified,
-                           p.userid, p.created, p.subject
+                           d.timestart, d.timeend, p.userid, p.created, p.subject
                     HAVING COUNT(r.id) = 0
                   ORDER BY p.created DESC";
             $rows = $DB->get_records_sql($sql, ['forumid' => (int) $forum->id, 'since' => $since]);

@@ -114,18 +114,29 @@ final class tool_provider_extras_test extends advanced_testcase {
         $this->assertContains('moodle_search_content', $names);
         $this->assertContains('moodle_create_user', $names);
         $this->assertContains('moodle_due_work', $names);
-        $this->assertNotContains('moodle_find_user', $names);
-        $this->assertNotContains('moodle_send_message', $names);
-        $this->assertNotContains('moodle_create_course', $names);
-        $this->assertNotContains('moodle_update_course', $names);
-        $this->assertNotContains('moodle_enrol_user', $names);
-        $this->assertNotContains('moodle_grading_queue', $names);
-        $this->assertNotContains('moodle_unanswered_forum_posts', $names);
-        $this->assertNull(tool_provider::find_ai_tool('moodle_create_course'));
-        $this->assertNull(tool_provider::find_ai_tool('moodle_update_course'));
-        $this->assertNull(tool_provider::find_ai_tool('moodle_enrol_user'));
-        $this->assertNull(tool_provider::find_ai_tool('moodle_grading_queue'));
-        $this->assertNull(tool_provider::find_ai_tool('moodle_unanswered_forum_posts'));
+
+        // Premium-only tools are present iff the premium add-on unlocks them.
+        // The free baseline excludes them; with local_elediaai_tutor_premium
+        // installed and enabled they become part of the catalogue.
+        $premiumtools = [
+            'moodle_find_user',
+            'moodle_send_message',
+            'moodle_create_course',
+            'moodle_update_course',
+            'moodle_enrol_user',
+            'moodle_grading_queue',
+            'moodle_unanswered_forum_posts',
+        ];
+        $haspremium = \webservice_elediamcp\local\premium::has_mcp_tools();
+        foreach ($premiumtools as $premiumtool) {
+            if ($haspremium) {
+                $this->assertContains($premiumtool, $names, "{$premiumtool} should be unlocked by premium.");
+                $this->assertNotNull(tool_provider::find_ai_tool($premiumtool));
+            } else {
+                $this->assertNotContains($premiumtool, $names, "{$premiumtool} should require premium.");
+                $this->assertNull(tool_provider::find_ai_tool($premiumtool));
+            }
+        }
 
         foreach ($tools as $tool) {
             $this->assertArrayHasKey('inputSchema', $tool);

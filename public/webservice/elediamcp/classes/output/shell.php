@@ -118,17 +118,23 @@ final class shell {
         $pluginshell = self::tutor_plugin_shell_class();
         self::$usespluginshell = $pluginpage !== null && $pluginshell !== null;
         if (self::$usespluginshell) {
+            $canconfig = has_capability('moodle/site:config', \core\context\system::instance());
             $configurationurl = new moodle_url('/webservice/elediamcp/configuration.php');
             $tutorcomponent = self::tutor_component();
             $actions = $pluginshell::action_slots(
                 'webservice_elediamcp',
-                true,
+                $canconfig,
                 $configurationurl,
                 get_string('shell_help_label', 'webservice_elediamcp'),
                 get_string('shell_settings_label', 'webservice_elediamcp'),
                 true
             );
-            $actions['helpurl'] = (new moodle_url('/webservice/elediamcp/help.php'))->out(false);
+            // The help page is the admin configuration guide (site:config). Only link it
+            // for users who can open it, so non-admins (e.g. a teacher on the token page)
+            // do not hit an "access denied" — and the settings cog is gated the same way.
+            if ($canconfig) {
+                $actions['helpurl'] = (new moodle_url('/webservice/elediamcp/help.php'))->out(false);
+            }
 
             $headerdata = [
                 'name' => $tutorcomponent !== null
@@ -163,15 +169,24 @@ final class shell {
      * @return string Raw HTML for the Plugin Shell `sectionnav` slot.
      */
     private static function sectionnav(string $active): string {
+        $syscontext = \core\context\system::instance();
+        $canconfig = has_capability('moodle/site:config', $syscontext);
+
+        // Admins get the unified cross-plugin tutor navigation (when the block renders
+        // it); non-admins (e.g. a teacher on the token page) fall through to an
+        // MCP-scoped menu with no admin links.
         $tutorshell = self::tutor_shell_class();
-        if ($tutorshell !== null) {
-            return $tutorshell::sectionnav(self::ACTIVE_ELEDIAMCP);
+        if ($canconfig && $tutorshell !== null) {
+            $nav = $tutorshell::sectionnav(self::ACTIVE_ELEDIAMCP);
+            if (trim($nav) !== '') {
+                return $nav;
+            }
         }
 
         $tutorcomponent = self::tutor_component();
         $items = [];
 
-        if ($tutorcomponent !== null) {
+        if ($canconfig && $tutorcomponent !== null) {
             $items = [
                 [
                     'key' => 'configuration',
@@ -220,14 +235,31 @@ final class shell {
             }
         }
 
-        $items[] = [
-            'key' => self::ACTIVE_ELEDIAMCP,
-            'icon' => 'fa-plug',
-            'label' => $tutorcomponent !== null
-                ? get_string('nav_elediamcp', $tutorcomponent)
-                : get_string('pluginname', 'webservice_elediamcp'),
-            'url' => new moodle_url('/webservice/elediamcp/configuration.php'),
-        ];
+        if ($canconfig) {
+            $items[] = [
+                'key' => self::ACTIVE_ELEDIAMCP,
+                'icon' => 'fa-plug',
+                'label' => $tutorcomponent !== null
+                    ? get_string('nav_elediamcp', $tutorcomponent)
+                    : get_string('pluginname', 'webservice_elediamcp'),
+                'url' => new moodle_url('/webservice/elediamcp/configuration.php'),
+            ];
+        }
+
+        // The viewer's own MCP token preferences — anyone who may manage tokens
+        // (so the token page keeps a usable menu instead of an empty/admin-only one).
+        if (has_capability('webservice/elediamcp:managetokens', $syscontext)) {
+            $items[] = [
+                'key' => self::ACTIVE_TOKENS,
+                'icon' => 'fa-key',
+                'label' => get_string('tokens_heading', 'webservice_elediamcp'),
+                'url' => new moodle_url('/webservice/elediamcp/token/index.php'),
+            ];
+        }
+
+        if (empty($items)) {
+            return '';
+        }
 
         $html = html_writer::start_tag('nav', [
             'class' => 'lh-plugin-section-nav',
@@ -241,10 +273,7 @@ final class shell {
                 'class' => 'lh-plugin-section-nav__item',
                 'href' => $item['url']->out(false),
             ];
-            if (
-                $item['key'] === self::ACTIVE_ELEDIAMCP
-                    && in_array($active, [self::ACTIVE_ELEDIAMCP, self::ACTIVE_TOKENS], true)
-            ) {
+            if ($item['key'] === $active) {
                 $attrs['aria-current'] = 'page';
             }
             $label = html_writer::tag('i', '', [
