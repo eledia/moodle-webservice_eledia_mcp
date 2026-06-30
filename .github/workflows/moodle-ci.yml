@@ -47,6 +47,11 @@ jobs:
           --health-timeout=5s
           --health-retries=8
 
+      selenium:
+        image: selenium/standalone-chrome:4
+        ports:
+          - 4444:4444
+
     strategy:
       fail-fast: false
       matrix:
@@ -156,7 +161,7 @@ jobs:
 
       - name: Behat (Chrome)
         if: ${{ always() }}
-        run: moodle-plugin-ci behat --profile chrome --auto-rerun 1
+        run: moodle-plugin-ci behat --profile chrome --auto-rerun 1 --selenium http://localhost:4444
 
       # ----------------------------- Logs on failure -----------------------------
       - name: Upload Behat failure screenshots
