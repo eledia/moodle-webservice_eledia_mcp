@@ -178,4 +178,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and `WWW-Authenticate` hints on 401.
 
 [Unreleased]: https://eledia.de
+[1.1.0]: https://eledia.de
+[1.0.1]: https://eledia.de
+[1.0.0]: https://eledia.de
+[0.9.0]: https://eledia.de
 [0.8.0]: https://eledia.de

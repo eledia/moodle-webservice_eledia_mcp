@@ -35,6 +35,10 @@
   <a href="https://eledia.de"><strong>eledia.de</strong></a>
 </p>
 
+<p align="center">
+  <a href="README.de.md">Deutsche Dokumentation</a>
+</p>
+
 ---
 
 ## ✨ At a glance
@@ -50,6 +54,10 @@ of stable, denormalised, LLM-friendly tools** (`moodle_me`, `moodle_my_courses`,
 `moodle_forum_discussions`, …). Every tool runs **as the authenticated user** and
 enforces the same capability, enrolment and visibility checks as the equivalent
 Moodle screen — it can never reach data the user could not otherwise see.
+
+The free edition ships a baseline tool set; the full curated catalogue is unlocked
+by the optional **eLeDia.ai Tutor Premium** add-on (`local_elediaai_tutor_premium`,
+feature `mcp_tools`).
 
 > Built and maintained by [eLeDia GmbH](https://eledia.de), Berlin.
 
@@ -84,8 +92,10 @@ Then, as a site administrator:
 
 ## 🧩 Highlights
 
-- **AI-native tool layer** — 19 stable, curated tools layered on top of raw Moodle
-  Web Services, designed to be stable across Moodle minor releases.
+- **AI-native tool layer** — 24 stable, curated tools layered on top of raw Moodle
+  Web Services, designed to be stable across Moodle minor releases. A 15-tool
+  baseline ships in the free edition; the full catalogue is unlocked by the
+  optional eLeDia.ai Tutor Premium add-on.
 - **Token management** — self-service UI for users to create, inspect metadata for,
   and revoke their own MCP tokens, plus an internal PHP API for trusted first-party
   plugins to provision and revoke user-scoped tokens. See [Token management](#-token-management).
@@ -160,9 +170,10 @@ capability check.
 | Setting | Default | Purpose |
 |---|---|---|
 | **MCP external services** | _(none)_ | Which external services may issue MCP tokens. Only these appear in the self-service UI and the internal API. |
+| **Restrict endpoint to MCP services** | On | When on, the endpoint only accepts tokens belonging to a configured MCP external service — making the MCP service list the access boundary, not just the issuance boundary. Disable only for transitional setups that must present tokens minted for other web services. |
 | **Allowed CORS origins** | _(empty)_ | One origin per line. Empty = same-origin only. Wildcard is rejected by the form. |
 | **Allow token in query string** | Off | When off (recommended), only `Authorization: Bearer` is accepted. When on, `?wstoken=` is also accepted and a `Deprecation` header is emitted. |
-| **Expose raw Moodle Web Service functions** | Off | When off, only the curated AI-native tools are advertised. Recommended for production AI agents. |
+| **Expose raw Moodle Web Service functions** | Off | When off, only the curated AI-native tools are advertised. Recommended for production AI agents. Raw functions are only advertised when this is on **and** the premium add-on is active. |
 | **Rate limit per minute / per hour** | 60 / 600 | Per-token (or per-IP if unauthenticated). |
 | **Maximum request body size** | 1 MiB | Larger requests are rejected with HTTP 413. |
 | **Default page size for tools/list** | 50 | Larger catalogues are paginated through `nextCursor`. |
@@ -276,37 +287,45 @@ WWW-Authenticate: Bearer realm="Moodle MCP", resource_metadata="https://.../webs
 These tools are stable, low-cost, and recommended for AI agents. Every tool runs **as
 the authenticated user** and enforces the same capability, enrolment and visibility
 checks as the equivalent Moodle screen — they cannot be used to reach data the user
-could not otherwise see. All but the three write tools are read-only; write tools
-require an explicit two-step confirmation.
+could not otherwise see. The five write tools require an explicit two-step
+confirmation; everything else is read-only.
 
-| Tool | Type | Purpose |
-|---|---|---|
-| `moodle_me` | read | Identity probe: who is the authenticated user, on which site, in which language. Cheap to call every turn. |
-| `moodle_verify_user_context` | read | Compact bootstrap: enumerates active enrolments with roles and groups, optionally the user's capability set (gated by `webservice/elediamcp:viewcaps`). |
-| `moodle_find_user` | read | Resolves a free-text name fragment to messageable users (respects messaging privacy rules). |
-| `moodle_my_courses` | read | Lists the user's enrolled courses with progress classification and search. |
-| `moodle_search_courses` | read | Searches the visible course catalogue (respects course/category visibility). |
-| `moodle_course_contents` | read | Lists sections and visible activities of a course the user may access. |
-| `moodle_get_resource` | read | Returns the readable body of a page/book chapter/label/URL/resource by `cmid`. |
-| `moodle_search_content` | read | Full-text search across accessible content via global search (graceful fallback to activity names/descriptions when disabled). |
-| `moodle_get_announcements` | read | Recent news-forum posts across the user's enrolled courses. |
-| `moodle_forum_discussions` | read | Course forum discussions and posts (enforces groups, Q&A gating, timed posts and private replies via the forum API). |
-| `moodle_calendar_upcoming` | read | Upcoming deadlines and events scoped to the user's courses/groups. |
-| `moodle_my_assignments` | read | Assignment submission and grade status across enrolled courses. |
-| `moodle_my_grades` | read | Course-final grades, or per-item breakdown (respects hidden grade items). |
-| `moodle_my_progress` | read | Completion progress per enrolled course, optionally per-activity states for one course. |
-| `moodle_quiz_info` | read | Quizzes with timing/attempt limits and the user's **own** attempt history and best grade — never other users' attempts. |
-| `moodle_my_submission_files` | read | The user's **own** latest submission for one assignment: files and online-text content. Strictly self-scoped. |
-| `moodle_send_message` | **write** | Sends a one-to-one message. Two-step: preview, then `confirm=true`. Respects `can_send_message()`. |
-| `moodle_create_user` | **write** | Creates a user account. Two-step confirmation; requires `moodle/user:create`. |
-| `moodle_create_course` | **write** | Creates a course in a category. Two-step confirmation; requires `moodle/course:create` in the category context. |
-| `moodle_update_course` | **write** | Updates course title, shortname, visibility, summary and dates. Two-step confirmation; requires `moodle/course:update`. |
-| `moodle_enrol_user` | **write** | Enrols an existing user through manual enrolment. Two-step confirmation; requires `enrol/manual:enrol`. |
+The **Edition** column marks the 15 tools shipped in the free edition (Free) and the
+9 tools unlocked by the optional eLeDia.ai Tutor Premium add-on (Premium). The MCP
+configuration page reports the active edition and lists the additional premium tools.
 
-When **Expose raw Moodle Web Service functions** is enabled, every external function
-assigned to the authenticated service is additionally exposed as an MCP tool. This is
-convenient for power users but enlarges the schema surface; disable it for production
-AI agents to restrict the catalogue to the curated set above.
+| Tool | Type | Edition | Purpose |
+|---|---|---|---|
+| `moodle_me` | read | Free | Identity probe: who is the authenticated user, on which site, in which language. Cheap to call every turn. |
+| `moodle_verify_user_context` | read | Free | Compact bootstrap: enumerates active enrolments with roles and groups, optionally the user's capability set (gated by `webservice/elediamcp:viewcaps`). |
+| `moodle_find_user` | read | Premium | Resolves a free-text name fragment to messageable users (respects messaging privacy rules). |
+| `moodle_my_courses` | read | Free | Lists the user's enrolled courses with progress classification and search. |
+| `moodle_search_courses` | read | Free | Searches the visible course catalogue, or browses/lists all courses in scope when no query is given (respects course/category visibility). |
+| `moodle_course_contents` | read | Free | Lists sections and visible activities of a course the user may access. |
+| `moodle_get_resource` | read | Free | Returns the readable body of a page/book chapter/label/URL/resource by `cmid`. |
+| `moodle_search_content` | read | Free | Full-text search across accessible content via global search (graceful fallback to activity names/descriptions when disabled). |
+| `moodle_get_announcements` | read | Free | Recent news-forum posts across the user's enrolled courses. |
+| `moodle_forum_discussions` | read | Premium | Course forum discussions and posts (enforces groups, Q&A gating, timed posts and private replies via the forum API). |
+| `moodle_calendar_upcoming` | read | Free | Upcoming deadlines and events scoped to the user's courses/groups. |
+| `moodle_due_work` | read | Free | Prioritised learner to-do list: overdue assignments, upcoming assignment due dates and upcoming calendar events. |
+| `moodle_my_assignments` | read | Free | Assignment submission and grade status across enrolled courses. |
+| `moodle_my_grades` | read | Free | Course-final grades, or per-item breakdown (respects hidden grade items). |
+| `moodle_my_progress` | read | Free | Completion progress per enrolled course, optionally per-activity states for one course. |
+| `moodle_quiz_info` | read | Free | Quizzes with timing/attempt limits and the user's **own** attempt history and best grade — never other users' attempts. |
+| `moodle_my_submission_files` | read | Premium | The user's **own** latest submission for one assignment: files and online-text content. Strictly self-scoped. |
+| `moodle_grading_queue` | read | Premium | Teacher view: assignments the teacher can grade, with counts of submissions that appear to need grading. |
+| `moodle_unanswered_forum_posts` | read | Premium | Teacher view: visible forum discussions with no replies yet that the teacher can answer. |
+| `moodle_send_message` | **write** | Premium | Sends a one-to-one message. Two-step: preview, then `confirm=true`. Respects `can_send_message()`. |
+| `moodle_create_user` | **write** | Free | Creates a user account. Two-step confirmation; requires `moodle/user:create`. |
+| `moodle_create_course` | **write** | Premium | Creates a course in a category. Two-step confirmation; requires `moodle/course:create` in the category context. |
+| `moodle_update_course` | **write** | Premium | Updates course title, shortname, visibility, summary and dates. Two-step confirmation; requires `moodle/course:update`. |
+| `moodle_enrol_user` | **write** | Premium | Enrols an existing user through manual enrolment. Two-step confirmation; requires `enrol/manual:enrol`. |
+
+When **Expose raw Moodle Web Service functions** is enabled **and** the premium
+add-on is active, every external function assigned to the authenticated service is
+additionally exposed as an MCP tool. This is convenient for power users but enlarges
+the schema surface; disable it for production AI agents to restrict the catalogue to
+the curated set above.
 
 ### Error semantics
 
@@ -355,6 +374,7 @@ issued).
 | Rate limiting | Per token (or per IP if unauthenticated). HTTP 429 with `Retry-After` and `X-RateLimit-Remaining-*` headers. |
 | Request size | Enforced at the entry point (HTTP 413 above the limit). |
 | Endpoint capability | `webservice/elediamcp:use` checked at system context after authentication, in addition to per-function Moodle capability checks. |
+| Endpoint service scope | With **Restrict endpoint to MCP services** on (default), only tokens whose external service is a configured MCP service may reach the endpoint; other tokens get HTTP 401. The MCP service list is the access boundary, not just the issuance boundary. |
 | Per-tool authorisation | Each tool re-checks the relevant Moodle capability with the explicit user id and stays scoped to the authenticated user's data. |
 | Audit | `tool_invoked`, `write_performed`, `context_verified`, `token_created`, `token_revoked` events under *Site admin → Reports → Logs* (forwardable via Logstore plugins). |
 | Emergency disable | Returns HTTP 503 immediately, before any other processing. |
@@ -485,7 +505,8 @@ service" guidance.
 | 429 with `Retry-After` | Rate limit exceeded; wait the indicated number of seconds or raise the limits in settings. |
 | 413 "Request body exceeds the maximum allowed size" | Raise the **Maximum request body size** setting. |
 | 503 with `Retry-After: 3600` | **Emergency disable** is on in plugin settings. |
-| Empty tools list | Check that your service has functions added (raw tools), and that the user holds the required capabilities. AI-native tools are always present. |
+| Fewer tools than expected | The full curated catalogue requires the eLeDia.ai Tutor Premium add-on (feature `mcp_tools`); the free edition exposes the 15-tool baseline. Raw tools additionally require **Expose raw Moodle Web Service functions** plus functions added to the service. The free AI-native tools are always present. |
+| 401 "This token is not authorised for the MCP service" | The token's external service is not in **MCP external services** while **Restrict endpoint to MCP services** is on. Add the service, or disable the restriction for transitional setups. |
 | `?wstoken=` returns 401 | Enable **Allow token in query string** in plugin settings, or use the Authorization header. |
 
 ---
