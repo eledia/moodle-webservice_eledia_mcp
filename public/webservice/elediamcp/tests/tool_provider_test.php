@@ -16,6 +16,8 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use context_system;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
@@ -38,8 +40,8 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
  * @copyright   2025 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\tool_provider
  */
+#[CoversClass(\webservice_elediamcp\local\tool_provider::class)]
 final class tool_provider_test extends externallib_advanced_testcase {
     /**
      * Test schema generation for simple string value.
@@ -250,9 +252,8 @@ final class tool_provider_test extends externallib_advanced_testcase {
 
     /**
      * Test get_tools retrieves available functions.
-     *
-     * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function test_get_tools(): void {
         global $DB, $USER;
         $this->resetAfterTest(true);

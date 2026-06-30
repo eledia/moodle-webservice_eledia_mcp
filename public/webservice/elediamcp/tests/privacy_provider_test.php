@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use context_system;
 use webservice_elediamcp\local\token_manager;
@@ -27,8 +28,8 @@ use webservice_elediamcp\privacy\provider;
  * @package     webservice_elediamcp
  * @copyright   2026 eLeDia GmbH, Berlin
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\privacy\provider
  */
+#[CoversClass(\webservice_elediamcp\privacy\provider::class)]
 final class privacy_provider_test extends advanced_testcase {
     /**
      * Reset state before each test.

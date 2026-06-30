@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use webservice_elediamcp\local\security;
 
@@ -27,8 +28,8 @@ use webservice_elediamcp\local\security;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\security
  */
+#[CoversClass(\webservice_elediamcp\local\security::class)]
 final class security_test extends advanced_testcase {
     /**
      * Setup: ensure a clean cache state before each test.

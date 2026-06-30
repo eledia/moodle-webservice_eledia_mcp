@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use ReflectionClass;
 use ReflectionMethod;
@@ -28,8 +29,8 @@ use ReflectionMethod;
  * @copyright   2025 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\client
  */
+#[CoversClass(\webservice_elediamcp\client::class)]
 final class client_test extends advanced_testcase {
     /**
      * Test client instantiation.

@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use moodle_exception;
 use webservice_elediamcp\local\request;
@@ -28,8 +29,8 @@ use webservice_elediamcp\local\request;
  * @copyright   2025 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\request
  */
+#[CoversClass(\webservice_elediamcp\local\request::class)]
 final class request_test extends advanced_testcase {
     /**
      * Test valid JSON-RPC 2.0 request construction.

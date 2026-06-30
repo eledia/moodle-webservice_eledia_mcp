@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use webservice_elediamcp\local\protocol;
 
@@ -27,8 +28,8 @@ use webservice_elediamcp\local\protocol;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\protocol
  */
+#[CoversClass(\webservice_elediamcp\local\protocol::class)]
 final class protocol_test extends advanced_testcase {
     /**
      * Latest version is the newest in the SUPPORTED list.

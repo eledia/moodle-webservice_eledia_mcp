@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use webservice_elediamcp\local\ai\tool_exception;
 use webservice_elediamcp\local\ai\tools\moodle_my_submission_files;
@@ -29,9 +30,9 @@ use webservice_elediamcp\local\ai\tools\moodle_search_content;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_search_content
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_my_submission_files
  */
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_search_content::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_my_submission_files::class)]
 final class content_tools_test extends advanced_testcase {
     /**
      * With global search disabled the fallback finds visible activities by

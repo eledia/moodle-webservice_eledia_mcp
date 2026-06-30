@@ -16,6 +16,8 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
+use PHPUnit\Framework\Attributes\RunInSeparateProcess;
 use advanced_testcase;
 use webservice_elediamcp\local\protocol;
 use webservice_elediamcp\local\tool_provider;
@@ -28,8 +30,8 @@ use webservice_elediamcp\local\tool_provider;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\tool_provider
  */
+#[CoversClass(\webservice_elediamcp\local\tool_provider::class)]
 final class tool_provider_extras_test extends advanced_testcase {
     /**
      * Pagination slices a tool list and emits a stable opaque cursor.
@@ -156,9 +158,8 @@ final class tool_provider_extras_test extends advanced_testcase {
 
     /**
      * Premium add-on unlocks the full AI-native catalogue.
-     *
-     * @runInSeparateProcess
      */
+    #[RunInSeparateProcess]
     public function test_premium_addon_unlocks_full_ai_catalogue(): void {
         if (!class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
             // phpcs:ignore moodle.PHP.ForbiddenTokens.Found

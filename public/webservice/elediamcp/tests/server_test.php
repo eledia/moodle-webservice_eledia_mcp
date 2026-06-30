@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use core_external\external_multiple_structure;
 use core_external\external_single_structure;
@@ -39,8 +40,8 @@ require_once($CFG->dirroot . '/webservice/lib.php');
  * @copyright   2025 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\server
  */
+#[CoversClass(\webservice_elediamcp\local\server::class)]
 final class server_test extends advanced_testcase {
     /**
      * Test server instantiation.

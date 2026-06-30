@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use completion_info;
 use webservice_elediamcp\local\ai\tool_exception;
@@ -35,13 +36,13 @@ use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_my_progress
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_quiz_info
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_forum_discussions
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_due_work
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_grading_queue
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts
  */
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_my_progress::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_quiz_info::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_forum_discussions::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_due_work::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_grading_queue::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts::class)]
 final class learner_tools_test extends advanced_testcase {
     /**
      * Progress reports percentage and per-activity states for a tracked course.

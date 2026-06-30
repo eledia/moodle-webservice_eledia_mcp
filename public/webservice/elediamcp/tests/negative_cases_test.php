@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use webservice_elediamcp\local\ai\tool_exception;
 use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
@@ -40,17 +41,17 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_course_contents
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_get_resource
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_search_courses
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_my_assignments
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_my_grades
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_get_announcements
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_find_user
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_send_message
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_course_contents::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_get_resource::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_search_courses::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_my_assignments::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_my_grades::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_get_announcements::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_find_user::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_send_message::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_verify_user_context::class)]
 final class negative_cases_test extends advanced_testcase {
     /**
      * Course contents of a hidden course are rejected for an unenrolled user.

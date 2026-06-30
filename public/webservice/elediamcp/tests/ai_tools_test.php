@@ -16,6 +16,7 @@
 
 namespace webservice_elediamcp;
 
+use PHPUnit\Framework\Attributes\CoversClass;
 use advanced_testcase;
 use webservice_elediamcp\local\ai\registry;
 use webservice_elediamcp\local\ai\tool_exception;
@@ -37,17 +38,17 @@ use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
  * @copyright   2026 eLeDia GmbH, Berlin
  * @link        https://eledia.de
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
- * @covers      \webservice_elediamcp\local\ai\registry
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_course
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_create_user
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_due_work
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_enrol_user
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_grading_queue
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_update_course
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_me
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts
- * @covers      \webservice_elediamcp\local\ai\tools\moodle_verify_user_context
  */
+#[CoversClass(\webservice_elediamcp\local\ai\registry::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_create_course::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_create_user::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_due_work::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_enrol_user::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_grading_queue::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_update_course::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_me::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts::class)]
+#[CoversClass(\webservice_elediamcp\local\ai\tools\moodle_verify_user_context::class)]
 final class ai_tools_test extends advanced_testcase {
     /**
      * Registry exposes the MVP AI tools.
