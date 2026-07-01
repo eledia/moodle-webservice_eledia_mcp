@@ -522,6 +522,27 @@ final class ai_tools_test extends advanced_testcase {
     }
 
     /**
+     * moodle_enrol_user rejects Moodle's built-in guest account as a target.
+     */
+    public function test_moodle_enrol_user_rejects_guest_user(): void {
+        global $USER;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $guest = guest_user();
+
+        $this->expectException(tool_exception::class);
+        $this->expectExceptionMessage('Cannot enrol the guest user.');
+        moodle_enrol_user::execute([
+            'user_id' => (int) $guest->id,
+            'course_id' => (int) $course->id,
+            'role_shortname' => 'editingteacher',
+            'confirm' => true,
+        ], $USER);
+    }
+
+    /**
      * Check whether a user has any enrolment record in a course.
      */
     private function is_user_enrolled_in_course(int $userid, int $courseid): bool {

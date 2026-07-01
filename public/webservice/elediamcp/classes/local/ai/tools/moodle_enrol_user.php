@@ -59,6 +59,9 @@ class moodle_enrol_user implements ai_tool {
     public static function description(): string {
         return 'Enrols an existing Moodle user into an existing course through the manual enrolment '
             . 'method. This is a write tool and requires enrol/manual:enrol in the target course. '
+            . 'The caller must pass a real confirmed Moodle user id; never use the guest user as a '
+            . 'fallback. If the request refers to "me" or "the current user", resolve it with '
+            . 'moodle_me before calling this tool. '
             . 'If manual enrolment is missing or disabled, users with enrol/manual:config can enable it '
             . 'during the confirmed step. Two-step flow: first call returns a preview; call again with '
             . 'confirm=true to enrol.';
@@ -78,7 +81,8 @@ class moodle_enrol_user implements ai_tool {
                 'user_id' => [
                     'type' => 'integer',
                     'minimum' => 1,
-                    'description' => 'Existing Moodle user id to enrol.',
+                    'description' => 'Existing confirmed Moodle user id to enrol. Must not be the guest user. '
+                        . 'For "me/current user", first call moodle_me and use that id.',
                 ],
                 'course_id' => [
                     'type' => 'integer',
@@ -187,6 +191,15 @@ class moodle_enrol_user implements ai_tool {
         $targetuser = core_user::get_user($userid, '*', MUST_EXIST);
         if (!empty($targetuser->deleted)) {
             throw new tool_exception('Cannot enrol a deleted user.', ['user_id' => $userid]);
+        }
+        if (isguestuser($targetuser)) {
+            throw new tool_exception('Cannot enrol the guest user.', ['user_id' => $userid]);
+        }
+        if (empty($targetuser->confirmed)) {
+            throw new tool_exception('Cannot enrol an unconfirmed user.', ['user_id' => $userid]);
+        }
+        if (!empty($targetuser->suspended)) {
+            throw new tool_exception('Cannot enrol a suspended user.', ['user_id' => $userid]);
         }
 
         $course = get_course($courseid);
