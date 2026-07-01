@@ -448,6 +448,41 @@ final class ai_tools_test extends advanced_testcase {
     }
 
     /**
+     * moodle_enrol_user enables a disabled manual enrolment method on confirmation.
+     */
+    public function test_moodle_enrol_user_enables_disabled_manual_enrolment(): void {
+        global $USER;
+        $this->resetAfterTest(true);
+        $this->setAdminUser();
+
+        $course = $this->getDataGenerator()->create_course();
+        $student = $this->getDataGenerator()->create_user();
+        $manual = enrol_get_plugin('manual');
+        $this->assertNotNull($manual);
+        $instance = $this->manual_enrol_instance((int) $course->id, false);
+        $this->assertNotNull($instance);
+        $manual->update_status($instance, ENROL_INSTANCE_DISABLED);
+
+        $args = [
+            'user_id' => (int) $student->id,
+            'course_id' => (int) $course->id,
+            'role_shortname' => 'editingteacher',
+        ];
+
+        $preview = moodle_enrol_user::execute($args, $USER);
+        $this->assertTrue($preview['requires_confirmation']);
+        $this->assertSame('enable', $preview['preview']['manual_enrolment_action']);
+
+        $enrolled = moodle_enrol_user::execute($args + ['confirm' => true], $USER);
+        $this->assertTrue($enrolled['enrolled']);
+        $this->assertFalse($enrolled['requires_confirmation']);
+        $this->assertTrue($enrolled['enrolment']['manual_enrolment_enabled']);
+        $this->assertTrue($this->is_user_enrolled_in_course((int) $student->id, (int) $course->id));
+        $enabledinstance = $this->manual_enrol_instance((int) $course->id, true);
+        $this->assertNotNull($enabledinstance);
+    }
+
+    /**
      * moodle_enrol_user requires manual enrol capability.
      */
     public function test_moodle_enrol_user_requires_capability(): void {
@@ -500,5 +535,17 @@ final class ai_tools_test extends advanced_testcase {
                 AND e.courseid = :courseid",
             ['userid' => $userid, 'courseid' => $courseid]
         );
+    }
+
+    /**
+     * Return a manual enrolment instance for a course.
+     */
+    private function manual_enrol_instance(int $courseid, bool $enabledonly): ?\stdClass {
+        foreach (enrol_get_instances($courseid, $enabledonly) as $instance) {
+            if ($instance->enrol === 'manual') {
+                return $instance;
+            }
+        }
+        return null;
     }
 }

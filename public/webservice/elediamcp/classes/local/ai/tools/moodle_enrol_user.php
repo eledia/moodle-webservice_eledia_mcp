@@ -59,7 +59,9 @@ class moodle_enrol_user implements ai_tool {
     public static function description(): string {
         return 'Enrols an existing Moodle user into an existing course through the manual enrolment '
             . 'method. This is a write tool and requires enrol/manual:enrol in the target course. '
-            . 'Two-step flow: first call returns a preview; call again with confirm=true to enrol.';
+            . 'If manual enrolment is missing or disabled, users with enrol/manual:config can enable it '
+            . 'during the confirmed step. Two-step flow: first call returns a preview; call again with '
+            . 'confirm=true to enrol.';
     }
 
     /**
@@ -129,6 +131,7 @@ class moodle_enrol_user implements ai_tool {
                         'role_id' => ['type' => 'integer'],
                         'role_shortname' => ['type' => 'string'],
                         'course_url' => ['type' => 'string'],
+                        'manual_enrolment_enabled' => ['type' => 'boolean'],
                     ],
                 ],
                 'preview' => [
@@ -139,6 +142,7 @@ class moodle_enrol_user implements ai_tool {
                         'course_id' => ['type' => 'integer'],
                         'course_fullname' => ['type' => 'string'],
                         'role_shortname' => ['type' => 'string'],
+                        'manual_enrolment_action' => ['type' => 'string'],
                     ],
                 ],
                 'summary' => ['type' => 'string'],
@@ -200,8 +204,9 @@ class moodle_enrol_user implements ai_tool {
         }
 
         $instance = self::manual_instance($courseid);
-        if ($instance === null) {
-            throw new tool_exception('Manual enrolment is not enabled for this course.', ['course_id' => $courseid]);
+        $manualaction = self::manual_enrolment_action($courseid, $instance);
+        if ($manualaction !== 'none') {
+            require_capability('enrol/manual:config', $coursecontext, $user->id);
         }
 
         $preview = [
@@ -210,16 +215,20 @@ class moodle_enrol_user implements ai_tool {
             'course_id' => $courseid,
             'course_fullname' => format_string($course->fullname, true, ['context' => $coursecontext]),
             'role_shortname' => (string) $role->shortname,
+            'manual_enrolment_action' => $manualaction,
         ];
 
         if (empty($arguments['confirm'])) {
+            $manualnote = $manualaction === 'enable'
+                ? ' The disabled manual enrolment method will be enabled first.'
+                : ($manualaction === 'create' ? ' A manual enrolment method will be created first.' : '');
             return [
                 'enrolled' => false,
                 'requires_confirmation' => true,
                 'enrolment' => null,
                 'preview' => $preview,
                 'summary' => 'Ready to enrol ' . fullname($targetuser) . ' into ' . $course->fullname
-                    . ' as ' . $role->shortname . '. Call again with confirm=true to enrol.',
+                    . ' as ' . $role->shortname . '.' . $manualnote . ' Call again with confirm=true to enrol.',
             ];
         }
 
@@ -227,6 +236,7 @@ class moodle_enrol_user implements ai_tool {
         if ($plugin === null) {
             throw new tool_exception('Manual enrolment plugin is not available.');
         }
+        $instance = self::ensure_manual_instance($course, $coursecontext, $user, $plugin, $instance);
 
         $plugin->enrol_user(
             $instance,
@@ -246,10 +256,12 @@ class moodle_enrol_user implements ai_tool {
                 'role_id' => (int) $role->id,
                 'role_shortname' => (string) $role->shortname,
                 'course_url' => (new moodle_url('/course/view.php', ['id' => $courseid]))->out(false),
+                'manual_enrolment_enabled' => $manualaction !== 'none',
             ],
             'preview' => $preview,
             'summary' => 'Enrolled ' . fullname($targetuser) . ' into ' . $course->fullname
-                . ' as ' . $role->shortname . '.',
+                . ' as ' . $role->shortname . ($manualaction !== 'none'
+                    ? ' after enabling manual enrolment.' : '') . '.',
         ];
     }
 
@@ -272,12 +284,54 @@ class moodle_enrol_user implements ai_tool {
     /**
      * Return the enabled manual enrolment instance for a course.
      */
-    private static function manual_instance(int $courseid): ?stdClass {
-        foreach (enrol_get_instances($courseid, true) as $instance) {
+    private static function manual_instance(int $courseid, bool $enabledonly = true): ?stdClass {
+        foreach (enrol_get_instances($courseid, $enabledonly) as $instance) {
             if ($instance->enrol === 'manual') {
                 return $instance;
             }
         }
         return null;
+    }
+
+    /**
+     * Return what needs to happen before manual enrolment can enrol users.
+     */
+    private static function manual_enrolment_action(int $courseid, ?stdClass $enabledinstance): string {
+        if ($enabledinstance !== null) {
+            return 'none';
+        }
+        return self::manual_instance($courseid, false) !== null ? 'enable' : 'create';
+    }
+
+    /**
+     * Ensure the course has an enabled manual enrolment instance.
+     */
+    private static function ensure_manual_instance(
+        stdClass $course,
+        context_course $coursecontext,
+        stdClass $user,
+        \enrol_plugin $plugin,
+        ?stdClass $instance
+    ): stdClass {
+        global $DB;
+
+        if ($instance !== null) {
+            return $instance;
+        }
+
+        require_capability('enrol/manual:config', $coursecontext, $user->id);
+
+        $instance = self::manual_instance((int) $course->id, false);
+        if ($instance !== null) {
+            $plugin->update_status($instance, ENROL_INSTANCE_ENABLED);
+            $instance->status = ENROL_INSTANCE_ENABLED;
+            return $instance;
+        }
+
+        $instanceid = $plugin->add_instance($course);
+        if (empty($instanceid)) {
+            throw new tool_exception('Manual enrolment method could not be created.', ['course_id' => (int) $course->id]);
+        }
+        return $DB->get_record('enrol', ['id' => $instanceid, 'enrol' => 'manual'], '*', MUST_EXIST);
     }
 }
