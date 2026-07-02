@@ -41,6 +41,10 @@ use webservice_elediamcp\local\ai\tools\moodle_my_submission_files;
 use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
 use webservice_elediamcp\local\ai\tools\moodle_search_content;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
+use webservice_elediamcp\local\ai\tools\moodle_selfstudy_create_quiz;
+use webservice_elediamcp\local\ai\tools\moodle_selfstudy_get_quiz;
+use webservice_elediamcp\local\ai\tools\moodle_selfstudy_list_quizzes;
+use webservice_elediamcp\local\ai\tools\moodle_selfstudy_submit_attempt;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
 use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
 use webservice_elediamcp\local\ai\tools\moodle_update_course;
@@ -112,6 +116,12 @@ class registry {
         }
         if (class_exists('\local_lernhive_questiongen\local\generator')) {
             $tools[] = moodle_generate_questions::class;
+        }
+        if (class_exists('\local_lernhive_selfstudy\local\quiz_service')) {
+            $tools[] = moodle_selfstudy_create_quiz::class;
+            $tools[] = moodle_selfstudy_list_quizzes::class;
+            $tools[] = moodle_selfstudy_get_quiz::class;
+            $tools[] = moodle_selfstudy_submit_attempt::class;
         }
 
         return $tools;

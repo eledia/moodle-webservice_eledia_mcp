@@ -5,6 +5,19 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.3.0] - 2026-07-02
+
+### Added
+- Student-facing self-study tool family (only on sites with
+  `local_lernhive_selfstudy` installed): `moodle_selfstudy_create_quiz`
+  generates a personal practice quiz server-side via the site AI provider,
+  `moodle_selfstudy_list_quizzes` and `moodle_selfstudy_get_quiz` drive the
+  conversational quiz flow (questions are returned without solutions), and
+  `moodle_selfstudy_submit_attempt` grades answers, stores the attempt and
+  records Moodle competency evidence with teacher-review recommendations.
+  Teacher per-course opt-in and per-student daily quotas are enforced by the
+  wrapped plugin.
+
 ## [1.2.0] - 2026-07-02
 
 ### Added

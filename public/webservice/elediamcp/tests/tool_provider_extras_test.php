@@ -105,6 +105,10 @@ final class tool_provider_extras_test extends advanced_testcase {
     public function test_ai_tools_in_catalogue(): void {
         $this->resetAfterTest(true);
 
+        if (class_exists('\local_elediaai_tutor_premium\feature')) {
+            $this->markTestSkipped('Premium add-on installed; free-tier catalogue cannot be asserted.');
+        }
+
         $tools = tool_provider::get_ai_tools(protocol::LATEST);
         $names = array_column($tools, 'name');
 

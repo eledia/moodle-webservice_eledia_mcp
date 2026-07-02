@@ -360,7 +360,8 @@ class moodle_create_activity implements ai_tool {
             'preview' => $preview,
             'summary' => 'Created ' . $type . ' "' . $finalname . '" in section ' . $section
                 . ' of ' . $preview['course_fullname'] . '.'
-                . ($type === 'book' ? ' ' . $chapterscreated . ' chapters added.' : ''),
+                . ($type === 'book' ? ' ' . $chapterscreated . ' chapters added.' : '')
+                . ' Link: ' . $activityurl . ' — share this link with the user.',
         ];
     }
 

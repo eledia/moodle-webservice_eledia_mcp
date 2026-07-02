@@ -112,8 +112,8 @@ final class generation_tools_test extends advanced_testcase {
     public function test_generation_tools_premium_gated_without_addon(): void {
         $this->resetAfterTest(true);
 
-        if (class_exists('\\local_elediaai_tutor_premium\\feature', false)) {
-            $this->markTestSkipped('Premium add-on class already loaded in this process.');
+        if (class_exists('\\local_elediaai_tutor_premium\\feature')) {
+            $this->markTestSkipped('Premium add-on installed; the without-addon case cannot be asserted.');
         }
 
         $this->assertNull(tool_provider::find_ai_tool('moodle_create_activity'));

@@ -327,7 +327,8 @@ class moodle_generate_h5p implements ai_tool {
             ],
             'preview' => $preview,
             'summary' => 'Generated H5P ' . $type . ' "' . $item['name'] . '" and published it to the '
-                . $target . ' of ' . $preview['course_fullname'] . '.',
+                . $target . ' of ' . $preview['course_fullname'] . '. Link: ' . $item['url']
+                . ' — share this link with the user.',
         ];
     }
 

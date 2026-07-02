@@ -22,6 +22,7 @@ use cm_info;
 use context_course;
 use context_module;
 use moodle_exception;
+use moodle_url;
 use stdClass;
 use webservice_elediamcp\local\ai\ai_tool;
 use webservice_elediamcp\local\ai\tool_exception;
@@ -187,6 +188,7 @@ class moodle_generate_questions implements ai_tool {
                         'category_name' => ['type' => 'string'],
                         'qbank_cmid' => ['type' => 'integer'],
                         'qbank_name' => ['type' => 'string'],
+                        'qbank_url' => ['type' => 'string'],
                         'question_names' => ['type' => 'array', 'items' => ['type' => 'string']],
                     ],
                 ],
@@ -385,6 +387,8 @@ class moodle_generate_questions implements ai_tool {
             );
         }
 
+        $qbankurl = (new moodle_url('/mod/qbank/view.php', ['id' => (int) $qbankcm->id]))->out(false);
+
         return [
             'created' => true,
             'requires_confirmation' => false,
@@ -395,12 +399,14 @@ class moodle_generate_questions implements ai_tool {
                 'category_name' => $categoryname,
                 'qbank_cmid' => (int) $qbankcm->id,
                 'qbank_name' => $qbankcm->get_formatted_name(),
+                'qbank_url' => $qbankurl,
                 'question_names' => self::imported_question_names($categoryid, (int) $result->imported),
             ],
             'preview' => $preview,
             'summary' => 'Imported ' . (int) $result->imported . ' question(s) into "'
                 . $qbankcm->get_formatted_name() . '"'
-                . ((int) $result->skipped > 0 ? ' (' . (int) $result->skipped . ' skipped)' : '') . '.',
+                . ((int) $result->skipped > 0 ? ' (' . (int) $result->skipped . ' skipped)' : '')
+                . '. Link: ' . $qbankurl . ' — share this link with the user.',
         ];
     }
 
