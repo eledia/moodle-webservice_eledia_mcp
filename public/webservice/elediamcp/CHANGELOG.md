@@ -5,6 +5,25 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.2.0] - 2026-07-02
+
+### Added
+- Premium `moodle_create_activity` tool that creates course activities (page,
+  label, url, book including chapters, assign) with preview and confirmation
+  flow.
+- Premium `moodle_generate_h5p` tool (only on sites with `local_h5pauthor`
+  installed) that generates H5P dialog cards, fill-in-the-blanks or
+  single-choice content server-side via the site AI provider and publishes it
+  to the content bank or as a course activity.
+- Premium `moodle_generate_questions` tool (only on sites with
+  `local_lernhive_questiongen` installed) that generates quiz questions
+  server-side via the site AI provider and imports them into a question bank
+  of the course, creating a bank when the course has none.
+
+### Changed
+- The tool registry now registers the eledia.ai generation tools conditionally,
+  so marketplace installations without the eledia.ai suite are unaffected.
+
 ## [1.1.0] - 2026-06-28
 
 ### Added

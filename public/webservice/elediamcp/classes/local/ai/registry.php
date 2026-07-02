@@ -20,12 +20,15 @@ namespace webservice_elediamcp\local\ai;
 
 use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
 use webservice_elediamcp\local\ai\tools\moodle_course_contents;
+use webservice_elediamcp\local\ai\tools\moodle_create_activity;
 use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
 use webservice_elediamcp\local\ai\tools\moodle_due_work;
 use webservice_elediamcp\local\ai\tools\moodle_enrol_user;
 use webservice_elediamcp\local\ai\tools\moodle_find_user;
 use webservice_elediamcp\local\ai\tools\moodle_forum_discussions;
+use webservice_elediamcp\local\ai\tools\moodle_generate_h5p;
+use webservice_elediamcp\local\ai\tools\moodle_generate_questions;
 use webservice_elediamcp\local\ai\tools\moodle_grading_queue;
 use webservice_elediamcp\local\ai\tools\moodle_get_announcements;
 use webservice_elediamcp\local\ai\tools\moodle_get_resource;
@@ -67,7 +70,7 @@ class registry {
      * @return class-string<ai_tool>[]
      */
     public static function all(): array {
-        return [
+        $tools = [
             // Identity & context.
             moodle_me::class,
             moodle_verify_user_context::class,
@@ -99,7 +102,19 @@ class registry {
             moodle_create_course::class,
             moodle_update_course::class,
             moodle_enrol_user::class,
+            moodle_create_activity::class,
         ];
+
+        // Optional eledia.ai generation tools: registered only when the wrapped
+        // plugin is installed, so marketplace installs never reference them.
+        if (class_exists('\local_h5pauthor\local\authoring_service')) {
+            $tools[] = moodle_generate_h5p::class;
+        }
+        if (class_exists('\local_lernhive_questiongen\local\generator')) {
+            $tools[] = moodle_generate_questions::class;
+        }
+
+        return $tools;
     }
 
     /**

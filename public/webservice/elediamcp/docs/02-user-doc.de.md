@@ -35,6 +35,18 @@ Nutzererstellung bereit, sofern der Moodle-Nutzer die noetigen Rechte besitzt.
 Mit dem Premium-Feature `mcp_tools` wird der vollstaendige MCP-Katalog
 freigeschaltet, einschliesslich weiterer Kommunikations-, Forum-, Abgabe-,
 Kurserstellungs- und roher Moodle-Webservice-Tools, sofern die Richtlinie dies
-zulaesst. Premium-Schreibtools umfassen Kurserstellung, Kursaktualisierung und
-manuelle Kurseinschreibung. Sie nutzen eine Vorschau und veraendern Moodle erst
+zulaesst. Premium-Schreibtools umfassen Kurserstellung, Kursaktualisierung,
+manuelle Kurseinschreibung und Aktivitaetserstellung (Textseite, Textfeld,
+Link, Buch, Aufgabe). Sie nutzen eine Vorschau und veraendern Moodle erst
 beim zweiten Aufruf mit `confirm=true`.
+
+## KI-Generierungs-Tools (eledia.ai-Suite)
+
+Auf Instanzen mit installierter eledia.ai-Suite erscheinen automatisch zwei
+weitere Premium-Tools: `moodle_generate_h5p` (benoetigt `local_h5pauthor`)
+erzeugt interaktive H5P-Inhalte und veroeffentlicht sie in der Inhaltsbibliothek
+oder als Kursaktivitaet; `moodle_generate_questions` (benoetigt
+`local_lernhive_questiongen`) erzeugt Quizfragen in einer Fragensammlung des
+Kurses. Beide Tools generieren serverseitig ueber den konfigurierten
+KI-Anbieter der Moodle-Instanz (Website-Administration > KI) und nutzen wie die
+uebrigen Schreibtools den Vorschau-Ablauf mit `confirm=true`.
