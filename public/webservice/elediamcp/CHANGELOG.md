@@ -5,6 +5,24 @@ All notable changes to the **webservice_elediamcp** plugin are documented here.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [1.4.0] - 2026-07-02
+
+### Added
+- Teacher grading loop: `moodle_read_submission` returns a student's
+  assignment submission content (online text, readable files inline) and
+  `moodle_grade_submission` saves points plus a feedback comment with a
+  preview/confirm flow. With marking workflow enabled the grade is stored
+  as "In review" for teacher release; advanced grading forms are rejected.
+- `moodle_course_health`: read-only course report with inactive students,
+  per-assignment submission/grading coverage and course grade summary.
+- `moodle_message_course_students`: targeted bulk message (all students,
+  not-submitted for an assignment, or inactive for N days) with recipient
+  preview, confirm flow and a hard recipient cap.
+- `moodle_update_activity`: change name, visibility, description, page
+  content, url target and assignment dates of existing activities via the
+  canonical update path (events, calendar and gradebook stay consistent).
+- `moodle_manage_sections`: create, rename and hide/show course sections.
+
 ## [1.3.0] - 2026-07-02
 
 ### Added

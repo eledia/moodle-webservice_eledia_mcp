@@ -20,6 +20,7 @@ namespace webservice_elediamcp\local\ai;
 
 use webservice_elediamcp\local\ai\tools\moodle_calendar_upcoming;
 use webservice_elediamcp\local\ai\tools\moodle_course_contents;
+use webservice_elediamcp\local\ai\tools\moodle_course_health;
 use webservice_elediamcp\local\ai\tools\moodle_create_activity;
 use webservice_elediamcp\local\ai\tools\moodle_create_course;
 use webservice_elediamcp\local\ai\tools\moodle_create_user;
@@ -32,13 +33,17 @@ use webservice_elediamcp\local\ai\tools\moodle_generate_questions;
 use webservice_elediamcp\local\ai\tools\moodle_grading_queue;
 use webservice_elediamcp\local\ai\tools\moodle_get_announcements;
 use webservice_elediamcp\local\ai\tools\moodle_get_resource;
+use webservice_elediamcp\local\ai\tools\moodle_grade_submission;
+use webservice_elediamcp\local\ai\tools\moodle_manage_sections;
 use webservice_elediamcp\local\ai\tools\moodle_me;
+use webservice_elediamcp\local\ai\tools\moodle_message_course_students;
 use webservice_elediamcp\local\ai\tools\moodle_my_assignments;
 use webservice_elediamcp\local\ai\tools\moodle_my_courses;
 use webservice_elediamcp\local\ai\tools\moodle_my_grades;
 use webservice_elediamcp\local\ai\tools\moodle_my_progress;
 use webservice_elediamcp\local\ai\tools\moodle_my_submission_files;
 use webservice_elediamcp\local\ai\tools\moodle_quiz_info;
+use webservice_elediamcp\local\ai\tools\moodle_read_submission;
 use webservice_elediamcp\local\ai\tools\moodle_search_content;
 use webservice_elediamcp\local\ai\tools\moodle_search_courses;
 use webservice_elediamcp\local\ai\tools\moodle_selfstudy_create_quiz;
@@ -47,6 +52,7 @@ use webservice_elediamcp\local\ai\tools\moodle_selfstudy_list_quizzes;
 use webservice_elediamcp\local\ai\tools\moodle_selfstudy_submit_attempt;
 use webservice_elediamcp\local\ai\tools\moodle_send_message;
 use webservice_elediamcp\local\ai\tools\moodle_unanswered_forum_posts;
+use webservice_elediamcp\local\ai\tools\moodle_update_activity;
 use webservice_elediamcp\local\ai\tools\moodle_update_course;
 use webservice_elediamcp\local\ai\tools\moodle_verify_user_context;
 
@@ -100,6 +106,8 @@ class registry {
             // Teacher workflows.
             moodle_grading_queue::class,
             moodle_unanswered_forum_posts::class,
+            moodle_course_health::class,
+            moodle_read_submission::class,
             // Write tools (require confirm).
             moodle_send_message::class,
             moodle_create_user::class,
@@ -107,6 +115,10 @@ class registry {
             moodle_update_course::class,
             moodle_enrol_user::class,
             moodle_create_activity::class,
+            moodle_update_activity::class,
+            moodle_manage_sections::class,
+            moodle_grade_submission::class,
+            moodle_message_course_students::class,
         ];
 
         // Optional eledia.ai generation tools: registered only when the wrapped
