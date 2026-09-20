@@ -207,6 +207,58 @@ Front-Page-Kurs id 1 ausgeschlossen, Capability-Sichtbarkeit). Optional
 ggf. Konsolidierung des `enrolled`-Pfads mit `moodle_my_courses`. Tool-
 Beschreibungen schärfen, damit das LLM Suchen vs. Browsen unterscheidet.
 
+### bug47 moodle_enrol_user erlaubt nicht zuweisbare Rollen
+Feature:  webservice_elediamcp
+Severity: S1
+Status:   open
+Linked:   task54, test54, Legacy-Review MCP-SEC-03
+
+**Beschreibung**
+`moodle_enrol_user` prüft `enrol/manual:enrol`, löst die gewünschte Rolle aber
+anschließend nur anhand ihres Shortnames aus `{role}` auf. Die in Moodles
+Einschreibedialog geltende Liste zuweisbarer Rollen wird nicht geprüft.
+
+**Reproduktion**
+1. MCP als Nutzer mit manueller Einschreibeberechtigung, aber eingeschränkter
+   Rollenvergabe aufrufen.
+2. Eine privilegierte, für diesen Nutzer nicht zuweisbare `role_shortname`
+   übergeben und den zweiten Aufruf mit `confirm=true` senden.
+
+**Erwartet**
+Nur Rollen aus der für den Akteur im Kurskontext zulässigen Rollenmenge werden
+akzeptiert.
+
+**Tatsächlich**
+Jede existierende Rolle wird bis zum Enrolment-Schreibpfad akzeptiert.
+
+### bug48 Grading-Werkzeuge umgehen Gruppen- und Blindmarkierungsgrenzen
+Feature:  webservice_elediamcp
+Severity: S1
+Status:   open
+Linked:   task55, test55, Legacy-Review MCP-SEC-05/MCP-PRIV-01
+
+**Beschreibung**
+`moodle_read_submission` und `moodle_grade_submission` prüfen lediglich
+`mod/assign:grade` und akzeptieren danach eine freie `user_id`. Sie prüfen
+weder die Assignment-Liste der für den Bewerter sichtbaren Nutzer noch
+Separate Groups. Außerdem geben Read/Grade auch bei aktivierter Blindmarkierung
+Klarnamen und Nutzer-ID aus. `moodle_grading_queue` aggregiert direkt aus den
+Submission-Tabellen und bildet dieselben Grenzen ebenfalls nicht ab.
+
+**Reproduktion**
+1. Assignment mit separaten Gruppen und einem Bewerter ohne
+   `moodle/site:accessallgroups` anlegen.
+2. Die ID eines Teilnehmers aus einer fremden Gruppe an Read/Grade übergeben.
+3. Alternativ Blindmarkierung aktivieren und Preview/Antwort prüfen.
+
+**Erwartet**
+Der MCP-Pfad entspricht Moodles Bewertungsoberfläche und wahrt Gruppen- sowie
+Anonymisierungsgrenzen.
+
+**Tatsächlich**
+Direkte IDs ermöglichen Lesen/Bewerten außerhalb der sichtbaren Gruppe; bei
+Blindmarkierung werden Identitäten offengelegt.
+
 ---
 
 ## 🧪 Tests

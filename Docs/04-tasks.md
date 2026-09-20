@@ -108,6 +108,62 @@ Wie erkennt man Fertigstellung?
 | **P2** | wichtig, aber nicht blockierend |
 | **P3** | nice-to-have, Backlog |
 
+### task54 Rollenvergabe beim manuellen Einschreiben begrenzen
+Status:    open
+Feature:   webservice_elediamcp
+Priorität: P0
+Linked:    bug47, test54, Legacy-Review MCP-SEC-03
+
+**Ziel**
+`moodle_enrol_user` darf ausschließlich Rollen vergeben, die der aufrufende
+MCP-Nutzer im Zielkurs auch über Moodles regulären Einschreibedialog zuweisen
+darf.
+
+**Schritte**
+1. Die erlaubten Rollen über Moodles Rollen-/Enrolment-API im Kurskontext
+   ermitteln; ein Lookup allein über `role.shortname` reicht nicht.
+2. Nicht zuweisbare Rollen vor Preview und Schreibpfad ablehnen.
+3. Regressionstests für Student, Teacher und eine privilegierte Systemrolle
+   ergänzen.
+
+**Erwartetes Ergebnis**
+Ein Nutzer mit `enrol/manual:enrol`, aber ohne Berechtigung zur Vergabe einer
+privilegierten Rolle, kann diese weder in der Vorschau auswählen noch beim
+bestätigten Aufruf zuweisen.
+
+**Done-Checkliste**
+- [ ] 03-dev-doc.md aktualisiert
+- [ ] test54 in 05-quality.md grün
+- [ ] PO Sign-off
+
+### task55 Bewertungswerkzeuge an Moodle-Gruppen und Blindmarkierung binden
+Status:    open
+Feature:   webservice_elediamcp
+Priorität: P0
+Linked:    bug48, test55, Legacy-Review MCP-SEC-05/MCP-PRIV-01
+
+**Ziel**
+Grading Queue, Lesen und Bewerten von Einreichungen müssen dieselbe
+Nutzer-Sichtbarkeit wie Moodles Assignment-Bewertungsoberfläche erzwingen.
+
+**Schritte**
+1. Zulässige Teilnehmer über die Assignment-API unter Berücksichtigung von
+   Separate Groups und `moodle/site:accessallgroups` bestimmen.
+2. Direkte `user_id`-Aufrufe in Read/Grade gegen diese Liste prüfen.
+3. Bei Blindmarkierung keine Klarnamen/IDs über Queue, Preview, Ergebnis oder
+   Summary ausgeben; nicht sicher abbildbare Fälle mit Verweis auf die Moodle-
+   Oberfläche ablehnen.
+4. Regressionstests für fremde Gruppen und aktivierte Blindmarkierung ergänzen.
+
+**Erwartetes Ergebnis**
+MCP erweitert weder den Teilnehmerkreis eines Bewerters noch hebt es Moodles
+Anonymisierung auf.
+
+**Done-Checkliste**
+- [ ] 01-features.md und 03-dev-doc.md aktualisiert
+- [ ] test55 in 05-quality.md grün
+- [ ] PO Sign-off
+
 ### task50 LernHive Copilot-Findings aus geschlossenen PRs triagieren
 Status:    open
 Feature:   feat50
